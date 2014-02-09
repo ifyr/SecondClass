@@ -1,5 +1,4 @@
-package cn.buaa.myweixin;
-
+package com.d2js.weixin;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -20,12 +19,10 @@ public class MainTopRightDialog extends Activity {
 		//dialog=new MyDialog(this);
 		layout=(LinearLayout)findViewById(R.id.main_dialog_layout);
 		layout.setOnClickListener(new OnClickListener() {
-			
 			@Override
 			public void onClick(View v) {
-				// TODO Auto-generated method stub
-				Toast.makeText(getApplicationContext(), "提示：点击窗口外部关闭窗口！", 
-						Toast.LENGTH_SHORT).show();	
+				Toast.makeText(getApplicationContext(), "提示：点击窗口外部关闭窗口！",
+						Toast.LENGTH_SHORT).show();
 			}
 		});
 	}
@@ -35,13 +32,4 @@ public class MainTopRightDialog extends Activity {
 		finish();
 		return true;
 	}
-	/*
-	public void exitbutton1(View v) {  
-    	this.finish();    	
-      }  
-	public void exitbutton0(View v) {  
-    	this.finish();
-    	MainWeixin.instance.finish();//关闭Main 这个Activity
-      }  
-	*/
 }

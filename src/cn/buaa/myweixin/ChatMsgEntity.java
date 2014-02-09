@@ -1,58 +1,52 @@
-
-package cn.buaa.myweixin;
+package com.d2js.weixin;
 
 public class ChatMsgEntity {
-    private static final String TAG = ChatMsgEntity.class.getSimpleName();
+	private static final String TAG = ChatMsgEntity.class.getSimpleName();
+	private String name;
+	private String date;
+	private String text;
+	private boolean isComMeg = true;
 
-    private String name;
+	public String getName() {
+		return name;
+	}
 
-    private String date;
+	public void setName(String name) {
+		this.name = name;
+	}
 
-    private String text;
+	public String getDate() {
+		return date;
+	}
 
-    private boolean isComMeg = true;
+	public void setDate(String date) {
+		this.date = date;
+	}
 
-    public String getName() {
-        return name;
-    }
+	public String getText() {
+		return text;
+	}
 
-    public void setName(String name) {
-        this.name = name;
-    }
+	public void setText(String text) {
+		this.text = text;
+	}
 
-    public String getDate() {
-        return date;
-    }
+	public boolean getMsgType() {
+		return isComMeg;
+	}
 
-    public void setDate(String date) {
-        this.date = date;
-    }
+	public void setMsgType(boolean isComMsg) {
+		isComMeg = isComMsg;
+	}
 
-    public String getText() {
-        return text;
-    }
+	public ChatMsgEntity() {
+	}
 
-    public void setText(String text) {
-        this.text = text;
-    }
-
-    public boolean getMsgType() {
-        return isComMeg;
-    }
-
-    public void setMsgType(boolean isComMsg) {
-    	isComMeg = isComMsg;
-    }
-
-    public ChatMsgEntity() {
-    }
-
-    public ChatMsgEntity(String name, String date, String text, boolean isComMsg) {
-        super();
-        this.name = name;
-        this.date = date;
-        this.text = text;
-        this.isComMeg = isComMsg;
-    }
-
+	public ChatMsgEntity(String name, String date, String text, boolean isComMsg) {
+		super();
+		this.name = name;
+		this.date = date;
+		this.text = text;
+		this.isComMeg = isComMsg;
+	}
 }

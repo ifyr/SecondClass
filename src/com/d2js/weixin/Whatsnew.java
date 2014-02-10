@@ -21,7 +21,7 @@ public class Whatsnew extends Activity {
 	private ImageView mPage4;
 	private ImageView mPage5;
 
-	private int currIndex = 0;
+	//private int currIndex = 0;
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -114,7 +114,7 @@ public class Whatsnew extends Activity {
 			default:
 				break;
 			}
-			currIndex = arg0;
+			//currIndex = arg0;
 			//animation.setFillAfter(true);
 			//animation.setDuration(300);
 			//mPageImg.startAnimation(animation);

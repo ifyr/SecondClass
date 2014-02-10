@@ -1,7 +1,7 @@
 package com.d2js.weixin;
 
 public class ChatMsgEntity {
-	private static final String TAG = ChatMsgEntity.class.getSimpleName();
+	//private static final String TAG = ChatMsgEntity.class.getSimpleName();
 	private String name;
 	private String date;
 	private String text;

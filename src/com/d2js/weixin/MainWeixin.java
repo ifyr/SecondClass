@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import android.os.Bundle;
 import android.app.Activity;
 import android.content.Intent;
+import android.graphics.Point;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v4.view.ViewPager.OnPageChangeListener;
@@ -19,7 +20,7 @@ import android.view.animation.TranslateAnimation;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
-import android.widget.Toast;
+//import android.widget.Toast;
 
 public class MainWeixin extends Activity {
 
@@ -33,7 +34,7 @@ public class MainWeixin extends Activity {
 	private int one;//单个水平动画位移
 	private int two;
 	private int three;
-	private LinearLayout mClose;
+	//private LinearLayout mClose;
 	private LinearLayout mCloseBtn;
 	private View layout;
 	private boolean menu_display = false;
@@ -71,9 +72,11 @@ public class MainWeixin extends Activity {
 		mTab3.setOnClickListener(new MyOnClickListener(2));
 		mTab4.setOnClickListener(new MyOnClickListener(3));
 		Display currDisplay = getWindowManager().getDefaultDisplay();//获取屏幕当前分辨率
-		int displayWidth = currDisplay.getWidth();
-		int displayHeight = currDisplay.getHeight();
-		one = displayWidth/4; //设置水平动画平移大小
+		Point outSize = new Point();
+		currDisplay.getSize(outSize);
+		//int displayWidth = size.x;
+		//int displayHeight = size.y;
+		one = outSize.x/4; //设置水平动画平移大小
 		two = one*2;
 		three = one*3;
 		//Log.i("info", "获取的屏幕分辨率为" + one + two + three + "X" + displayHeight);
@@ -239,12 +242,12 @@ public class MainWeixin extends Activity {
 				layout = inflater.inflate(R.layout.main_menu, null);
 
 				//将layout加入到PopupWindow中
-				menuWindow = new PopupWindow(layout,LayoutParams.FILL_PARENT, LayoutParams.WRAP_CONTENT); //后两个参数是width和height
+				menuWindow = new PopupWindow(layout,LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT); //后两个参数是width和height
 				//menuWindow.showAsDropDown(layout); //设置弹出效果
 				//menuWindow.showAsDropDown(null, 0, layout.getHeight());
 				menuWindow.showAtLocation(this.findViewById(R.id.mainweixin), Gravity.BOTTOM|Gravity.CENTER_HORIZONTAL, 0, 0); //设置layout在PopupWindow中显示的位置
 				//获取我们main中的控件呢
-				mClose = (LinearLayout)layout.findViewById(R.id.menu_close);
+				//mClose = (LinearLayout)layout.findViewById(R.id.menu_close);
 				mCloseBtn = (LinearLayout)layout.findViewById(R.id.menu_close_btn);
 
 				//注册每一个Layout的单击事件

@@ -1,17 +1,14 @@
 package com.d2js.weixin;
 
-import android.R.integer;
+//import android.R.integer;
 import android.content.Context;
-import android.database.DataSetObserver;
-import android.util.Log;
+//import android.database.DataSetObserver;
+//import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
-import android.widget.CheckBox;
-import android.widget.LinearLayout;
 import android.widget.TextView;
-import java.util.ArrayList;
 import java.util.List;
 
 public class ChatMsgViewAdapter extends BaseAdapter {
@@ -21,13 +18,13 @@ public class ChatMsgViewAdapter extends BaseAdapter {
 		int IMVT_TO_MSG = 1;
 	}
 
-	private static final String TAG = ChatMsgViewAdapter.class.getSimpleName();
+	//private static final String TAG = ChatMsgViewAdapter.class.getSimpleName();
 	private List<ChatMsgEntity> coll;
-	private Context ctx;
+	//private Context ctx;
 	private LayoutInflater mInflater;
 
 	public ChatMsgViewAdapter(Context context, List<ChatMsgEntity> coll) {
-		ctx = context;
+		//this.ctx = context;
 		this.coll = coll;
 		mInflater = LayoutInflater.from(context);
 	}

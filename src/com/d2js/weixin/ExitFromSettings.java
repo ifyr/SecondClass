@@ -1,7 +1,6 @@
 package com.d2js.weixin;
 
 import android.app.Activity;
-import android.content.Intent;
 import android.os.Bundle;
 import android.view.MotionEvent;
 import android.view.View;
@@ -19,7 +18,6 @@ public class ExitFromSettings extends Activity {
 		layout.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				// TODO Auto-generated method stub
 				Toast.makeText(getApplicationContext(), "提示：点击窗口外部关闭窗口！",
 						Toast.LENGTH_SHORT).show();
 			}

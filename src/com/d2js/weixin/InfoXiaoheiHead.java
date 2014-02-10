@@ -1,12 +1,9 @@
 package com.d2js.weixin;
 
 import android.os.Bundle;
-import android.os.Handler;
 import android.app.Activity;
-import android.content.Intent;
-import android.view.Menu;
 import android.view.MotionEvent;
-import android.view.WindowManager;
+//import android.view.WindowManager;
 
 public class InfoXiaoheiHead extends Activity{
 

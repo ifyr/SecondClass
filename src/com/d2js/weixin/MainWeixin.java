@@ -1,10 +1,17 @@
 package com.d2js.weixin;
 
 import java.util.ArrayList;
-import android.os.Bundle;
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Point;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
+import android.media.AudioManager;
+import android.media.MediaPlayer;
+import android.os.Bundle;
+import android.os.PowerManager;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v4.view.ViewPager.OnPageChangeListener;
@@ -22,7 +29,7 @@ import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 //import android.widget.Toast;
 
-public class MainWeixin extends Activity {
+public class MainWeixin extends Activity implements SensorEventListener {
 
 	public static MainWeixin instance = null;
 
@@ -41,12 +48,16 @@ public class MainWeixin extends Activity {
 	private PopupWindow menuWindow;
 	private LayoutInflater inflater;
 	//private Button mRightBtn;
+	private AudioManager audioManager;
+	private SensorManager mSensorManager;
+	private PowerManager localPowerManager = null;//电源管理对象
+	private PowerManager.WakeLock localWakeLock = null;//电源锁
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main_weixin);
-		 //启动activity时不自动弹出软键盘
+		//启动activity时不自动弹出软键盘
 		getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
 		instance = this;
 		/*
@@ -58,6 +69,12 @@ public class MainWeixin extends Activity {
 			}
 		});
 		*/
+		audioManager = (AudioManager) this.getSystemService(Context.AUDIO_SERVICE);
+		mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+		//获取系统服务POWER_SERVICE，返回一个PowerManager对象
+		localPowerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
+		//获取PowerManager.WakeLock对象,后面的参数|表示同时传入两个值,最后的是LogCat里用的Tag 
+		localWakeLock = this.localPowerManager.newWakeLock(32, "MyPower");//第一个参数为电源锁级别，第二个是日志tag
 
 		mTabPager = (ViewPager)findViewById(R.id.tabpager);
 		mTabPager.setOnPageChangeListener(new MyOnPageChangeListener());
@@ -293,5 +310,59 @@ public class MainWeixin extends Activity {
 	public void exit_settings(View v) {
 		Intent intent = new Intent (MainWeixin.this,ExitFromSettings.class);
 		startActivity(intent);
+	}
+
+	@Override
+	public void onDestroy(){
+		super.onDestroy();
+		if(mSensorManager != null){
+			localWakeLock.release();//释放电源锁，如果不释放finish这个acitivity后仍然会有自动锁屏的效果，不信可以试一试
+			mSensorManager.unregisterListener(this);//注销传感器监听
+		}
+	}
+
+	@Override
+	protected void onResume() {
+		//注册传感器，第一个参数为距离监听器，第二个是传感器类型，第三个是延迟类型
+		mSensorManager.registerListener(this,
+			mSensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY),// 距离感应器
+			SensorManager.SENSOR_DELAY_NORMAL);
+		super.onResume();
+	}
+
+	@Override
+	protected void onPause() {
+		mSensorManager.unregisterListener(this);
+		super.onPause();
+	}
+
+	@Override
+	public void onSensorChanged(SensorEvent event) {
+		float[] its = event.values;
+		if (its != null && event.sensor.getType() == Sensor.TYPE_PROXIMITY) {
+			//经过测试，当手贴近距离感应器的时候its[0]返回值为0.0，当手离开时返回1.0
+			if (its[0] == 0.0) {// 贴近手机
+				Toast.makeText(this, "听筒模式", Toast.LENGTH_LONG).show();
+				audioManager.setMode(AudioManager.MODE_IN_CALL);
+				if (localWakeLock.isHeld()) {
+					return;
+				} else{
+					localWakeLock.acquire();// 申请设备电源锁
+				}
+			} else {// 远离手机
+				Toast.makeText(this, "正常模式", Toast.LENGTH_LONG).show();
+				audioManager.setMode(AudioManager.MODE_NORMAL);
+				if (localWakeLock.isHeld()) {
+					return;
+				} else{
+					localWakeLock.setReferenceCounted(false);
+					localWakeLock.release(); // 释放设备电源锁
+				}
+			}
+		}
+	}
+
+	@Override
+	public void onAccuracyChanged(Sensor sensor, int accuracy) {
 	}
 }

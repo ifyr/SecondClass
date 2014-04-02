@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_gravity="top"
+    android:background="#666"
+    android:orientation="horizontal" >
+
+    <Button
+        android:id="@+id/audio_control"
+        android:layout_width="50dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="center"
+        android:contentDescription="@string/audio"
+        android:layout_margin="5dp"
+        android:background="@drawable/btn_play"
+        android:scaleType="fitCenter" />
+
+    <AbsoluteLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="top"
+        android:orientation="vertical"
+        android:padding="5dp" >
+
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="36dp"
+            android:gravity="top"
+            android:orientation="vertical" >
+
+            <SeekBar
+                android:id="@+id/audio_seekbar"
+                style="@style/SeekBar"
+                android:layout_width="fill_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:paddingLeft="50dp"
+                android:paddingRight="50dp" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/audio_name"
+            android:layout_width="match_parent"
+            android:layout_height="20dp"
+            android:layout_x="0dp"
+            android:layout_y="32dp"
+            android:ellipsize="marquee"
+            android:paddingLeft="5dp"
+            android:singleLine="true"
+            android:text="@string/audio"
+            android:textColor="#fff"
+            android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/audio_timerplayed"
+            android:layout_width="match_parent"
+            android:layout_height="20dp"
+            android:gravity="left"
+            android:paddingLeft="5dp"
+            android:text="00:00"
+            android:textColor="#fff"
+            android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/audio_timerrest"
+            android:layout_width="match_parent"
+            android:layout_height="20dp"
+            android:gravity="right"
+            android:paddingRight="5dp"
+            android:text="-08:59"
+            android:textColor="#fff"
+            android:textSize="14sp" />
+    </AbsoluteLayout>
+
+</LinearLayout>

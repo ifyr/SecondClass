@@ -1,43 +1,49 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-	package="com.d2js.weixin"
-	android:versionCode="1"
-	android:versionName="1.0" >
+    package="com.d2js.weixin"
+    android:installLocation="internalOnly"
+    android:versionCode="1"
+    android:versionName="1.0" >
 
-	<uses-sdk
-		android:minSdkVersion="19"
-		android:targetSdkVersion="19" />
+    <uses-sdk
+        android:minSdkVersion="10"
+        android:targetSdkVersion="10" />
 
-	<application
-		android:icon="@drawable/icon"
-		android:label="@string/app_name"
-		android:allowBackup="true" >
-		<activity
-			android:name=".Appstart"
-			android:label="@string/title_activity_main"
-			android:theme="@style/Anim_style2" >
-			<intent-filter>
-				<action android:name="android.intent.action.MAIN" />
-				<category android:name="android.intent.category.LAUNCHER" />
-			</intent-filter>
-		</activity>
-		<activity android:name=".WhatsnewDoor" android:theme="@style/Anim_style2" />
-		<activity android:name=".MainWeixin" android:theme="@style/Anim_style2" />
-		<activity android:name=".Login"  android:theme="@android:style/Theme.NoTitleBar" />
-		<activity android:name=".Welcome"  android:theme="@style/Anim_style2"  />
-		<activity android:name=".Whatsnew"  android:theme="@style/Anim_style2" />
-		<activity android:name=".ChatActivity"  android:theme="@android:style/Theme.NoTitleBar" />
-		<activity android:name=".InfoXiaohei"  android:theme="@android:style/Theme.NoTitleBar" />
-		<activity android:name="Exit" android:theme="@style/MyDialogStyle" />
-		<activity android:name="ExitFromSettings" android:theme="@style/MyDialogStyleBottom" />
-		<activity android:name="InfoXiaoheiHead" android:theme="@style/HeadScale" />
-		<activity android:name="LoadingActivity" android:theme="@style/MyDialogStyle" />
-		<activity android:name="MainTopRightDialog" android:theme="@style/MyDialogStyleTop" />
-	</application>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
 
-	<uses-permission android:name="android.permission.INTERNET" />
-	<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-	<uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
-	<uses-permission android:name="android.permission.DEVICE_POWER"/>
-	<uses-permission android:name="android.permission.WAKE_LOCK"/>
+    <application
+        android:allowBackup="true"
+        android:enabled="true"
+        android:icon="@drawable/icon"
+        android:killAfterRestore="false"
+        android:label="@string/app_name"
+        android:logo="@drawable/icon"
+        android:persistent="true"
+        android:restoreNeedsApplication="true" >
+        <activity
+            android:name=".Welcome"
+            android:screenOrientation="portrait"
+            android:theme="@style/AnimFade" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".Main"
+            android:screenOrientation="portrait"
+            android:theme="@style/AnimFade" />
+        <activity
+            android:name=".VideoPlayer"
+            android:screenOrientation="landscape"
+            android:theme="@style/AnimFade" />
+"
+    </application>
+
 </manifest>

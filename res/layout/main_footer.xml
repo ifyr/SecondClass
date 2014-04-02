@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_gravity="top"
+    android:background="#fcc"
+    android:orientation="horizontal" >
+
+    <TextView
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:layout_gravity="center"
+        android:background="#f66"
+        android:lineSpacingExtra="2dp"
+        android:paddingBottom="6dp"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
+        android:paddingTop="6dp"
+        android:text="@string/footer_title"
+        android:textColor="#333"
+        android:textSize="18sp" />
+
+    <LinearLayout
+        android:layout_width="200dp"
+        android:layout_height="60dp"
+        android:layout_gravity="top"
+        android:orientation="vertical"
+        android:paddingLeft="10dp"
+        android:paddingTop="6dp" >
+
+        <TextView
+            android:id="@+id/footer_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="marquee"
+            android:singleLine="true"
+            android:text="@string/footer_name"
+            android:textColor="#333"
+            android:textSize="18sp" />
+
+        <TextView
+            android:id="@+id/footer_info"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/footer_info"
+            android:textColor="#333"
+            android:textSize="18sp" />
+    </LinearLayout>
+
+    <ImageView
+        android:id="@+id/footer_resume"
+        android:layout_width="56dp"
+        android:layout_height="60dp"
+        android:clickable="true"
+        android:contentDescription="@string/footer_resume"
+        android:scaleType="centerInside"
+        android:src="@drawable/resume" />
+
+</LinearLayout>

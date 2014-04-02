@@ -1,8 +1,18 @@
 <resources>
-
-    <string name="app_name">我的微信 </string>
-    <string name="hello_world">Hello world!</string>
-    <string name="menu_settings">Settings</string>
-    <string name="title_activity_main">我的微信</string>
-
+    <string name="app_name">第二教室</string>
+    <string name="main_title">第二教室</string>
+    <string name="settings_title">设置</string>
+    <string name="exit_title">退出</string>
+    <string name="exit_message">确定要退出应用吗？\n双击退出键可直接退出应用。</string>
+    <string name="confirm">确定</string>
+    <string name="cancel">取消</string>
+    <string name="back">返回</string>
+    <string name="welcome">欢迎界面</string>
+    <string name="header_refresh">获取最新内容</string>
+    <string name="footer_title">上次\n播放</string>
+    <string name="footer_name">上次播放的内容的相应标题</string>
+    <string name="footer_info">已播放：00分00秒</string>
+    <string name="footer_resume">继续播放</string>
+    <string name="audio">音频</string>
+    <string name="video">视频</string>
 </resources>

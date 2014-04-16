@@ -1,18 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/confirm_dialog"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
-    android:background="#9ccc"
-    android:gravity="center" >
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_gravity="center"
+    android:background="#6fff"
+    android:gravity="center"
+    android:padding="5dp" >
 
     <LinearLayout
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:padding="8dp"
-        android:background="@drawable/confirm_dialog_bg"
+        android:layout_gravity="center"
+        android:background="@drawable/dialog_confirm_bg"
         android:gravity="top"
-        android:orientation="vertical" >
+        android:orientation="vertical"
+        android:padding="8dp" >
 
         <TextView
             android:id="@+id/confirm_title"
@@ -29,7 +32,7 @@
             android:background="#999" />
         
         <TextView
-            android:id="@+id/confirm_message"
+            android:id="@+id/waiting_message"
             android:layout_width="fill_parent"
             android:layout_height="80dp"
             android:gravity="center_horizontal"
@@ -42,7 +45,8 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="14dp"
             android:layout_marginTop="14dp"
-            android:gravity="center_horizontal" >
+            android:gravity="center_horizontal"
+            android:paddingTop="3dp" >
 
             <Button
                 android:id="@+id/btnConfirm"
@@ -58,7 +62,7 @@
                 android:id="@+id/btnCancel"
                 android:layout_width="80dp"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="60dp"
+                android:layout_marginLeft="40dp"
                 android:background="@drawable/btn_style_white"
                 android:gravity="center"
                 android:text="@string/cancel"
@@ -67,4 +71,4 @@
         </LinearLayout>
     </LinearLayout>
 
-</LinearLayout>
+</FrameLayout>

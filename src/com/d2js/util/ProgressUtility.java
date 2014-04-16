@@ -1,6 +1,6 @@
 package com.d2js.util;
 
-public class Utility {
+public class ProgressUtility {
 	/**
 	 * Function to convert milliseconds time to Timer Format
 	 * Hours:Minutes:Seconds

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/confirm_dialog"
+    style="@style/Circling"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_gravity="center"
+    android:background="#6fff"
+    android:gravity="center"
+    android:padding="5dp" >
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:background="@drawable/dialog_waiting_bg"
+        android:gravity="top"
+        android:orientation="horizontal"
+        android:padding="8dp" >
+
+        <ImageView
+            android:id="@+id/waiting_image"
+            android:layout_width="40dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginLeft="10dp"
+            android:contentDescription="@string/loading"
+            android:src="@drawable/load" />
+
+        <TextView
+            android:id="@+id/waiting_message"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginRight="10dp"
+            android:gravity="left|center_vertical"
+            android:text="@string/loading"
+            android:textColor="#333"
+            android:textSize="18sp" />
+
+    </LinearLayout>
+
+</FrameLayout>

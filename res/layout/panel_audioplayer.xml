@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/audio_layout"
+    android:layout_width="match_parent"
+    android:layout_height="60dp"
     android:layout_gravity="top"
     android:background="#666"
     android:orientation="horizontal" >
@@ -7,14 +10,14 @@
     <Button
         android:id="@+id/audio_control"
         android:layout_width="50dp"
-        android:layout_height="match_parent"
+        android:layout_height="50dp"
         android:layout_gravity="center"
-        android:contentDescription="@string/audio"
         android:layout_margin="5dp"
         android:background="@drawable/btn_play"
+        android:contentDescription="@string/audio"
         android:scaleType="fitCenter" />
 
-    <AbsoluteLayout
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_gravity="top"
@@ -41,8 +44,7 @@
             android:id="@+id/audio_name"
             android:layout_width="match_parent"
             android:layout_height="20dp"
-            android:layout_x="0dp"
-            android:layout_y="32dp"
+            android:layout_alignParentBottom="true"
             android:ellipsize="marquee"
             android:paddingLeft="5dp"
             android:singleLine="true"
@@ -54,9 +56,10 @@
             android:id="@+id/audio_timerplayed"
             android:layout_width="match_parent"
             android:layout_height="20dp"
+            android:layout_alignParentTop="true"
             android:gravity="left"
             android:paddingLeft="5dp"
-            android:text="00:00"
+            android:text="@string/space"
             android:textColor="#fff"
             android:textSize="14sp" />
 
@@ -64,11 +67,12 @@
             android:id="@+id/audio_timerrest"
             android:layout_width="match_parent"
             android:layout_height="20dp"
+            android:layout_alignParentTop="true"
             android:gravity="right"
             android:paddingRight="5dp"
-            android:text="-08:59"
+            android:text="@string/space"
             android:textColor="#fff"
             android:textSize="14sp" />
-    </AbsoluteLayout>
+    </RelativeLayout>
 
 </LinearLayout>

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.d2js.weixin"
+    package="com.d2js.secondclass"
     android:installLocation="internalOnly"
     android:versionCode="1"
     android:versionName="1.0" >
@@ -20,15 +20,15 @@
         android:allowBackup="true"
         android:enabled="true"
         android:icon="@drawable/icon"
-        android:killAfterRestore="false"
         android:label="@string/app_name"
         android:logo="@drawable/icon"
-        android:persistent="true"
-        android:restoreNeedsApplication="true" >
+        android:persistent="false"
+        android:theme="@android:style/Theme.Translucent" >
         <activity
-            android:name=".Welcome"
+            android:name="com.d2js.secondclass.Welcome"
             android:screenOrientation="portrait"
-            android:theme="@style/AnimFade" >
+            android:theme="@style/AnimFade"
+            android:finishOnTaskLaunch="true" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -36,14 +36,13 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".Main"
+            android:name="com.d2js.secondclass.Main"
             android:screenOrientation="portrait"
             android:theme="@style/AnimFade" />
         <activity
-            android:name=".VideoPlayer"
+            android:name="com.d2js.secondclass.VideoPlayer"
             android:screenOrientation="landscape"
-            android:theme="@style/AnimFade" />
-"
+            android:theme="@style/AnimFade" />
     </application>
 
 </manifest>

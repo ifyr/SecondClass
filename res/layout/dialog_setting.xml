@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/confirm_layout"
-    android:layout_width="fill_parent"
+    android:layout_width="match_parent"
     android:layout_height="fill_parent"
-    android:background="#9ccc"
+    android:background="#6fff"
     android:gravity="center"
-    android:layout_gravity="center" >
+    android:padding="5dp" >
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@drawable/setting_dialog_bg"
-        android:gravity="center_vertical"
+        android:layout_gravity="center"
+        android:background="@drawable/dialog_setting_bg"
         android:orientation="vertical"
         android:padding="8dp" >
 
@@ -19,7 +19,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:padding="8dp"
+            android:paddingTop="8dp"
             android:text="@string/settings_title"
             android:textColor="#000"
             android:textSize="20sp" />
@@ -32,7 +32,7 @@
         <RelativeLayout
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
+            android:layout_marginTop="4dp"
             android:gravity="center_vertical"
             android:orientation="horizontal" >
 
@@ -41,31 +41,45 @@
                 android:layout_width="80dp"
                 android:layout_height="32dp"
                 android:layout_alignParentRight="true"
+                android:layout_centerVertical="true"
                 android:layout_marginRight="8dp"
                 android:background="@drawable/btn_selector"
+                android:gravity="center"
                 android:textOff=""
                 android:textOn="" />
 
             <TextView
+                android:id="@+id/label_toggleUseTraffic"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
+                android:layout_alignParentTop="true"
                 android:layout_toLeftOf="@id/toggleUseTraffic"
-                android:padding="5dp"
-                android:text="允许2G/3G流量下载内容"
+                android:paddingLeft="5dp"
+                android:text="@string/usetraffic"
                 android:textColor="#000"
                 android:textSize="18sp" />
+
+            <TextView
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/label_toggleUseTraffic"
+                android:layout_toLeftOf="@id/toggleUseTraffic"
+                android:paddingLeft="10dp"
+                android:text="@string/usetraffic_description"
+                android:textColor="#000"
+                android:textSize="14sp" />
         </RelativeLayout>
 
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
-            android:layout_marginTop="8dp"
-            android:background="#ccc" />
+            android:layout_marginTop="4dp"
+            android:background="#f7f7f7" />
 
         <RelativeLayout
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
+            android:layout_marginTop="4dp"
             android:gravity="center_vertical"
             android:orientation="horizontal" >
 
@@ -74,6 +88,7 @@
                 android:layout_width="80dp"
                 android:layout_height="32dp"
                 android:layout_alignParentRight="true"
+                android:layout_centerVertical="true"
                 android:layout_marginRight="8dp"
                 android:background="@drawable/btn_selector"
                 android:checked="true"
@@ -81,25 +96,37 @@
                 android:textOn="" />
 
             <TextView
+                android:id="@+id/label_toggleAutoDownload"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
                 android:layout_toLeftOf="@id/toggleAutoDownload"
-                android:padding="5dp"
-                android:text="自动下载内容"
+                android:paddingLeft="5dp"
+                android:text="@string/autodownload"
                 android:textColor="#000"
                 android:textSize="18sp" />
+
+            <TextView
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/label_toggleAutoDownload"
+                android:layout_toLeftOf="@id/toggleAutoDownload"
+                android:paddingLeft="15dp"
+                android:paddingRight="5dp"
+                android:text="@string/autodownload_description"
+                android:textColor="#000"
+                android:textSize="14sp" />
         </RelativeLayout>
 
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
-            android:layout_marginTop="8dp"
-            android:background="#ccc" />
+            android:layout_marginTop="4dp"
+            android:background="#f7f7f7" />
 
         <RelativeLayout
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
+            android:layout_marginTop="4dp"
             android:gravity="center_vertical"
             android:orientation="horizontal" >
 
@@ -108,26 +135,39 @@
                 android:layout_width="80dp"
                 android:layout_height="32dp"
                 android:layout_alignParentRight="true"
+                android:layout_centerVertical="true"
                 android:layout_marginRight="8dp"
                 android:background="@drawable/btn_selector"
-                android:checked="true"
+                android:checked="false"
                 android:textOff=""
                 android:textOn="" />
 
             <TextView
+                android:id="@+id/label_toggleAutoDelete"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
                 android:layout_toLeftOf="@id/toggleAutoDelete"
-                android:padding="5dp"
-                android:text="自动删除一周以前的内容"
+                android:paddingLeft="5dp"
+                android:text="@string/autodelete"
                 android:textColor="#000"
                 android:textSize="18sp" />
+
+            <TextView
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/label_toggleAutoDelete"
+                android:layout_toLeftOf="@id/toggleAutoDelete"
+                android:paddingLeft="15dp"
+                android:paddingRight="5dp"
+                android:text="@string/autodelete_description"
+                android:textColor="#000"
+                android:textSize="14sp" />
         </RelativeLayout>
 
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="4dp"
             android:background="#999" />
 
         <Button
@@ -135,7 +175,7 @@
             android:layout_width="80dp"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:layout_margin="8dp"
+            android:layout_margin="6dp"
             android:background="@drawable/btn_style_white"
             android:gravity="center"
             android:text="@string/back"
@@ -143,4 +183,4 @@
             android:textSize="18sp" />
     </LinearLayout>
 
-</LinearLayout>
+</FrameLayout>

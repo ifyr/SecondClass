@@ -1,22 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
     android:layout_gravity="top"
     android:background="@drawable/title_bar"
     android:orientation="horizontal" >
 
     <ImageView
+        android:id="@+id/header_logo"
         android:layout_width="80dp"
         android:layout_height="92dp"
+        android:layout_alignParentLeft="true"
         android:contentDescription="@string/main_title"
         android:scaleType="center"
         android:src="@drawable/logo" />
 
     <LinearLayout
         android:id="@+id/header_text"
-        android:layout_width="180dp"
+        android:layout_width="match_parent"
         android:layout_height="92dp"
         android:layout_gravity="top"
-        android:orientation="vertical" >
+        android:orientation="vertical"
+        android:layout_toRightOf="@id/header_logo" >
 
         <TextView
             android:layout_width="wrap_content"
@@ -28,10 +33,10 @@
             android:textSize="24sp" />
 
         <LinearLayout
-            android:id="@+id/header_info"
-            android:layout_width="fill_parent"
+            android:id="@+id/panel_refresh"
+            android:layout_width="wrap_content"
             android:layout_height="40dp"
-            android:layout_gravity="center_vertical"
+            android:layout_gravity="center"
             android:clickable="true"
             android:orientation="horizontal" >
 
@@ -39,8 +44,6 @@
                 android:id="@+id/header_status"
                 android:layout_width="wrap_content"
                 android:layout_height="40dp"
-                android:layout_gravity="center"
-                android:layout_marginLeft="40dp"
                 android:paddingTop="8dp"
                 android:text="@string/header_refresh"
                 android:textColor="#36c"
@@ -48,7 +51,7 @@
 
             <ImageView
                 android:id="@+id/header_loading"
-                android:layout_width="30dp"
+                android:layout_width="40dp"
                 android:layout_height="40dp"
                 android:contentDescription="@string/header_refresh"
                 android:padding="2dp"
@@ -61,10 +64,12 @@
         android:id="@+id/header_setting"
         android:layout_width="32dp"
         android:layout_height="52dp"
+        android:layout_alignParentRight="true"
+        android:layout_marginRight="10dp"
         android:clickable="true"
         android:contentDescription="@string/settings_title"
         android:paddingTop="4dp"
         android:scaleType="centerInside"
         android:src="@drawable/setting" />
 
-</LinearLayout>
+</RelativeLayout>

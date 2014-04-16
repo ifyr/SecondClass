@@ -58,7 +58,7 @@
     </style>
 
     <style name="Dialog">
-        
+
         <!-- 背景透明 -->
         <item name="android:windowBackground">@android:color/transparent</item>
         <!-- 背景缓存颜色 -->
@@ -78,9 +78,9 @@
         <!-- 模糊 -->
         <item name="android:backgroundDimEnabled">false</item>
         <!-- 灰度 -->
-		<item name="android:backgroundDimAmount">0.0</item>
+        <item name="android:backgroundDimAmount">0.0</item>
     </style>
-    
+
     <style name="DialogTopBottom" parent="android:Theme.Dialog">
         <item name="android:windowAnimationStyle">@style/AnimTopBottom</item>
     </style>
@@ -88,7 +88,7 @@
     <style name="DialogBottomTop" parent="android:Theme.Dialog">
         <item name="android:windowAnimationStyle">@style/AnimBottomTop</item>
     </style>
-    
+
     <style name="DialogBottom" parent="android:Theme.Dialog">
         <item name="android:windowAnimationStyle">@style/AnimBottom</item>
     </style>
@@ -113,13 +113,18 @@
         <item name="android:indeterminateDrawable">@drawable/loading</item>
     </style>
 
-	<style name="SeekBar">
-	    <item name="android:indeterminateOnly">false</item>
-	    <item name="android:progressDrawable">@drawable/seekbar_progress</item>
-	    <item name="android:minHeight">3dp</item>
-	    <item name="android:maxHeight">3dp</item>
-	    <item name="android:thumb">@drawable/seekbar_point</item>
-	    <item name="android:thumbOffset">17dp</item>
-	</style>
+    <style name="Circling">
+        <item name="android:autoStart">true</item>
+        <item name="android:inAnimation">@anim/circling</item>
+    </style>
+
+    <style name="SeekBar">
+        <item name="android:indeterminateOnly">false</item>
+        <item name="android:progressDrawable">@drawable/seekbar_progress</item>
+        <item name="android:minHeight">3dp</item>
+        <item name="android:maxHeight">3dp</item>
+        <item name="android:thumb">@drawable/seekbar_point</item>
+        <item name="android:thumbOffset">17dp</item>
+    </style>
 
 </resources>

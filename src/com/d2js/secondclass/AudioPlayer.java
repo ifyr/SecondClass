@@ -1,8 +1,10 @@
 package com.d2js.secondclass;
 
 import com.d2js.util.Constants;
+import com.d2js.util.MediaUtility;
 import com.d2js.util.ProgressUtility;
 
+import android.annotation.SuppressLint;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnCompletionListener;
@@ -11,6 +13,7 @@ import android.media.MediaPlayer.OnInfoListener;
 import android.media.MediaPlayer.OnPreparedListener;
 import android.media.MediaPlayer.OnSeekCompleteListener;
 import android.media.MediaPlayer.OnVideoSizeChangedListener;
+import android.os.Handler;
 import android.os.Message;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -23,7 +26,6 @@ import android.view.View.OnClickListener;
 public class AudioPlayer implements OnCompletionListener, OnInfoListener,
 		SeekBar.OnSeekBarChangeListener, OnSeekCompleteListener,
 		OnErrorListener, OnPreparedListener, OnVideoSizeChangedListener {
-	private static AudioPlayer instance = null;
 
 	private View view = null;
 	private MediaPlayer mediaPlayer = null;
@@ -34,15 +36,9 @@ public class AudioPlayer implements OnCompletionListener, OnInfoListener,
 	private boolean seekComplete = true;
 	private boolean isPaused = false;
 	private int progress = 0;
+	private String localmedia = null;
 
 	public AudioPlayer() {
-	}
-
-	public static AudioPlayer SharedInstance() {
-		if (instance == null) {
-			instance = new AudioPlayer();
-		}
-		return instance;
 	}
 
 	public void createView(LinearLayout layout) {
@@ -80,16 +76,12 @@ public class AudioPlayer implements OnCompletionListener, OnInfoListener,
 	public void play() {
 		TextView title = (TextView) view.findViewById(R.id.audio_name);
 		title.setText(Main.instance.playingData.title);
+		
+		seekBar.setProgress(0);
 
 		this.isPlaying = true;
 		this.isSeeking = false;
 		this.seekComplete = true;
-
-		String path = Main.instance.playingData.path;
-		if (path == null || path.isEmpty()) {
-			path = Main.instance.playingData.media;
-		}
-		this.progress = Main.instance.playingData.progress;
 
 		if (mediaPlayer == null) {
 			mediaPlayer = new MediaPlayer();
@@ -102,16 +94,55 @@ public class AudioPlayer implements OnCompletionListener, OnInfoListener,
 		mediaPlayer.setOnVideoSizeChangedListener(this);
 		mediaPlayer.setOnInfoListener(this);
 
+		mediaPlayer.setScreenOnWhilePlaying(true);
+		mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+
+		this.progress = Main.instance.playingData.progress;
+		this.localmedia = Main.instance.playingData.path;
+		if (localmedia == null || localmedia.isEmpty() || Main.instance.playingData.download < 100) {
+			MediaUtility mediaUtil = new MediaUtility(this.messageHander,
+					Main.instance.playingData);
+			localmedia = mediaUtil.getLocalMedia();
+			mediaUtil.download();
+		} else {
+			begin();
+		}
+
+		toggleButton(true);
+	}
+
+	@SuppressLint("HandlerLeak")
+	Handler messageHander = new Handler() {
+		@Override
+		public void handleMessage(Message msg) {
+			switch (msg.what) {
+			case Constants.MSG_HTTP_ERROR:
+			case Constants.MSG_DISK_ERROR:
+			case Constants.MSG_MEDIA_RECEIVED:
+			case Constants.MSG_FILE_DOWNLOADING:
+			case Constants.MSG_FILE_DOWNLOADED:
+				break;
+			case Constants.MSG_FILE_PROGRESSED:
+				if (msg.arg1 > 0) {
+					begin();
+				}
+				break;
+			default:
+				super.handleMessage(msg);
+				return;
+			}
+			Message.obtain(Main.instance.getHandler(),
+					msg.what, msg.arg1, msg.arg2, msg.obj).sendToTarget();
+		}
+	};
+
+	public void begin() {
 		try {
-			mediaPlayer.setScreenOnWhilePlaying(true);
-			mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-			mediaPlayer.setDataSource(path);
+			mediaPlayer.setDataSource(localmedia);
 			mediaPlayer.prepare();
 		} catch (Exception ex) {
 			finish();
 		}
-
-		toggleButton(true);
 	}
 
 	public void finish() {
@@ -205,6 +236,7 @@ public class AudioPlayer implements OnCompletionListener, OnInfoListener,
 
 	@Override
 	public boolean onError(MediaPlayer mp, int what, int extra) {
+		stop();
 		Main.instance.getHandler().sendEmptyMessage(Constants.MSG_AUDIO_ERROR);
 		return false;
 	}
@@ -214,15 +246,9 @@ public class AudioPlayer implements OnCompletionListener, OnInfoListener,
 		seekComplete = true;
 	}
 
-	@SuppressWarnings("deprecation")
 	protected void toggleButton(boolean playing) {
-		btnPausePlay
-				.setBackgroundDrawable(view
-						.getContext()
-						.getResources()
-						.getDrawable(
-								(playing ? R.drawable.btn_pause
-										: R.drawable.btn_play)));
+		btnPausePlay.setBackgroundResource(playing ? R.drawable.btn_pause
+										: R.drawable.btn_play);
 	}
 
 	public void stop() {
@@ -240,7 +266,7 @@ public class AudioPlayer implements OnCompletionListener, OnInfoListener,
 			isPaused = true;
 		}
 	}
-	
+
 	public void resume() {
 		if (mediaPlayer != null && isPaused) {
 			mediaPlayer.start();

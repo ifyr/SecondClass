@@ -1,5 +1,6 @@
 package com.d2js.secondclass;
 
+import java.util.ArrayList;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
@@ -33,9 +34,10 @@ import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import com.d2js.util.Constants;
-import com.d2js.util.HttpUtility;
+import com.d2js.util.HttpdUtility;
 import com.d2js.util.MediaList;
 import com.d2js.util.MediaItemData;
+import com.d2js.util.MediaUtility;
 import com.d2js.util.PreferenceUtility;
 import com.d2js.util.SystemUtility;
 import com.d2js.util.UncaughtExceptionHandler;
@@ -49,6 +51,9 @@ public class Main extends Activity implements SensorEventListener {
 	private static final int REQUESTCODE_VIDEOPLAYER = 0;
 
 	public MediaItemData playingData = null;
+	private HttpdUtility httpd = null;
+	private AudioPlayer audioPlayer = null;
+	private ArrayList<MediaItemData> downloadList = null;
 
 	private PopupWindow setting = null;
 	private PopupWindow confirm = null;
@@ -64,6 +69,7 @@ public class Main extends Activity implements SensorEventListener {
 	private long lastBackTime = 0;
 	private boolean isVertical = false; // 垂直放置
 	private boolean isLoadingData = false;
+	private boolean isDownloadingMedia = false;
 	private int statusPlaying = Constants.STATE_PLAYING_NONE;
 	private int statusPopup = Constants.STATE_POPUP_NONE;
 
@@ -80,6 +86,8 @@ public class Main extends Activity implements SensorEventListener {
 
 		ueHandler = new UncaughtExceptionHandler(this);
 		// Thread.setDefaultUncaughtExceptionHandler(ueHandler);
+
+		downloadList = new ArrayList<MediaItemData>();
 
 		sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
 		powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
@@ -186,12 +194,6 @@ public class Main extends Activity implements SensorEventListener {
 	}
 
 	@Override
-	public void onStop() {
-		super.onStop();
-		this.finish();
-	}
-
-	@Override
 	public void onDestroy() {
 		messageHandler.removeCallbacksAndMessages(null);
 		super.onDestroy();
@@ -256,19 +258,19 @@ public class Main extends Activity implements SensorEventListener {
 	protected void onActivityResult(int requestCode, int resultCode,
 			Intent intent) {
 		if (requestCode == REQUESTCODE_VIDEOPLAYER) {
-			if (resultCode == RESULT_OK) {
-				int position = playingData.progress;
-				if (position != 0) {
-					// TODO 保存状态
-				}
-			}
+			// 保存播放位置
+//			if (resultCode == RESULT_OK) {
+//				if (playingData.progress != 0) {
+//					MediaList.UpdateMediaItem(playingData);
+//				}
+//			}
 			statusPlaying = Constants.STATE_PLAYING_NONE;
 		}
 	}
 
 	protected void onRefreshData() {
 		MediaList.UpdateToday();
-		if (!MediaList.NeedLoad()) {
+		if (!MediaList.NeedUpdate()) {
 			Toast.makeText(this, "已是最新内容，无需刷新", Toast.LENGTH_SHORT).show();
 			return;
 		}
@@ -294,9 +296,8 @@ public class Main extends Activity implements SensorEventListener {
 
 	public void updateListData() {
 		boolean loadSuccessed = true;
-		while (loadSuccessed && MediaList.NeedLoad()) {
-			loadSuccessed = MediaList.UpdateList(HttpUtility.SharedInstance()
-					.getList(MediaList.ReadDate()));
+		while (loadSuccessed && MediaList.NeedUpdate()) {
+			loadSuccessed = MediaList.UpdateList();
 		}
 		messageHandler.sendEmptyMessage(Constants.MSG_LOAD_LISTDATA);
 	}
@@ -308,25 +309,30 @@ public class Main extends Activity implements SensorEventListener {
 			switch (msg.what) {
 			case Constants.MSG_LOAD_ACTIVITY:
 				onLoadActivity();
-				break;
+				return;
 			case Constants.MSG_LOAD_LISTDATA:
 				onLoadListData();
-				break;
-			case Constants.MSG_PLAY_AUDIO:
-				showAudioPlayer((String) msg.obj, msg.arg1);
-				break;
-			case Constants.MSG_PLAY_VIDEO:
-				showVideoPlayer((String) msg.obj, msg.arg1);
-				break;
+				return;
+			case Constants.MSG_PLAY_MEDIA:
+				playMedia((MediaItemData) msg.obj);
+				return;
 			case Constants.MSG_AUDIO_FINISH:
 				closeAudioPlayer(true);
-				break;
+				return;
 			case Constants.MSG_AUDIO_ERROR:
 				Toast.makeText(Main.this, "加载音频失败", Toast.LENGTH_SHORT).show();
 				closeAudioPlayer(true);
+				return;
+			case Constants.MSG_MEDIA_DOWNLOAD:
+				onMediaDownload((MediaItemData) msg.obj);
+				return;
+			case Constants.MSG_MEDIA_RECEIVED:
+				break;
+			case Constants.MSG_FILE_DOWNLOADING:
+				onFileDownloading((MediaItemData) msg.obj, msg.arg1);
 				break;
 			case Constants.MSG_FILE_PROGRESSED:
-				onFileProgressed((MediaItemData) msg.obj, msg.arg1);
+				onFileProgressed((MediaItemData) msg.obj);
 				break;
 			case Constants.MSG_FILE_DOWNLOADED:
 				onFileDownloaded((MediaItemData) msg.obj);
@@ -348,13 +354,26 @@ public class Main extends Activity implements SensorEventListener {
 				break;
 			default:
 				super.handleMessage(msg);
-				break;
+				return;
 			}
+			sendMessageToHttpd(msg);
 		}
 	};
 
 	public Handler getHandler() {
 		return messageHandler;
+	}
+
+	protected void sendMessageToHttpd(Message msg) {
+		if (httpd == null || !httpd.isAlive()) {
+			return;
+		}
+
+		if (!httpd.check((MediaItemData) msg.obj)) {
+			return;
+		}
+		Message.obtain(httpd.getHandler(), msg.what, msg.arg1, msg.arg2,
+				msg.obj).sendToTarget();
 	}
 
 	protected void onLoadActivity() {
@@ -368,31 +387,107 @@ public class Main extends Activity implements SensorEventListener {
 		isLoadingData = false;
 		hideWaitingDialog();
 
-		if (MediaList.NeedLoad()) {
+		if (MediaList.NeedUpdate()) {
 			Toast.makeText(Main.this, "获取最新内容失败，请检查网络", Toast.LENGTH_SHORT)
 					.show();
 		} else {
 			Toast.makeText(Main.this, "成功获取最新内容", Toast.LENGTH_SHORT).show();
-			mediaAdapter.notifyDataSetChanged();
-			PreferenceUtility.sharedInstance().putString(
-					Constants.PREFKEY_LIST, MediaList.MakeSaveString());
+			updateMediaList(null);
+			MediaList.Save();
 		}
 	}
 
-	protected void onFileProgressed(MediaItemData data, Integer progress) {
-		//
+	protected void onMediaDownload(MediaItemData data) {
+		if (data == null || data.media == null || data.media.isEmpty()) {
+			return;
+		}
+		synchronized (downloadList) {
+			for (MediaItemData m : downloadList) {
+				if (m.equals(data)) {
+					return;
+				}
+			}
+			data.download = 0;
+			downloadList.add(data);
+		}
+		updateMediaList(data);
+		executeDownloadQueue();
+	}
+	
+	protected void executeDownloadQueue() {
+		MediaItemData data = null;
+		synchronized (downloadList) {
+			if (isDownloadingMedia) {
+				return;
+			}
+			isDownloadingMedia = true;
+
+			if(downloadList.size() > 0) {
+				data = downloadList.remove(0);
+			}
+		}
+		if (data == null) {
+			isDownloadingMedia = false;
+			return;
+		}
+		MediaUtility mediaUtil = new MediaUtility(messageHandler, data);
+		mediaUtil.download();
+	}
+
+	protected void onFileDownloading(MediaItemData data, int size) {
+		if (playingData != null && playingData.equals(data)) {
+			if (httpd == null) {
+				httpd = new HttpdUtility();
+			}
+			httpd.startServe(data, size);
+		}
+	}
+
+	protected void onFileProgressed(MediaItemData data) {
+		updateMediaList(data);
 	}
 
 	protected void onFileDownloaded(MediaItemData data) {
-
+		data.download = 200;
+		MediaList.UpdateMediaItem(data);
+		updateMediaList(data);
+		
+		synchronized (downloadList) {
+			isDownloadingMedia = false;
+		}
+		executeDownloadQueue();
 	}
 
-	protected void onFileAborted(MediaItemData data) {
-
+	protected void onFileAborted(final MediaItemData data) {
+		if (statusPlaying == Constants.STATE_PLAYING_AUDIO) {
+			closeAudioPlayer(true);
+		}
+		data.download = -1;
+		updateMediaList(data);
+	}
+	
+	protected void updateMediaList(final MediaItemData data) {
+		runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				if(data == null) {
+					mediaAdapter.notifyDataSetChanged();
+				} else {
+					mediaAdapter.updateMediaItem(data);
+				}
+			}
+		});
 	}
 
-	private void showVideoPlayer(String date, int content) {
-		MediaItemData toplay = new MediaItemData(date, content);
+	private void playMedia(MediaItemData data) {
+		if (data.media.endsWith("mp3")) {
+			showAudioPlayer(data);
+		} else {
+			showVideoPlayer(data);
+		}
+	}
+
+	private void showVideoPlayer(MediaItemData toplay) {
 		if (toplay.media == null || toplay.media.isEmpty()) {
 			return;
 		}
@@ -411,15 +506,14 @@ public class Main extends Activity implements SensorEventListener {
 		startActivityForResult(intent, REQUESTCODE_VIDEOPLAYER);
 	}
 
-	private void showAudioPlayer(String date, int content) {
-		MediaItemData toplay = new MediaItemData(date, content);
+	private void showAudioPlayer(MediaItemData toplay) {
 		if (toplay.media == null || toplay.media.isEmpty()) {
 			return;
 		}
 
 		if (statusPlaying == Constants.STATE_PLAYING_AUDIO) {
 			// 正在播放的内容，不新启动播放
-			if (playingData != null && playingData.match(date, content)) {
+			if (playingData != null && playingData.equals(toplay)) {
 				return;
 			}
 			closeAudioPlayer(false);
@@ -431,21 +525,25 @@ public class Main extends Activity implements SensorEventListener {
 		statusPlaying = Constants.STATE_PLAYING_AUDIO;
 		playingData = toplay;
 
-		AudioPlayer audioplayer = AudioPlayer.SharedInstance();
+		if (audioPlayer == null) {
+			audioPlayer = new AudioPlayer();
+		}
 		LinearLayout footerlayout = (LinearLayout) findViewById(R.id.main_footer);
-
 		View audioview = footerlayout.findViewById(R.id.audio_layout);
 		if (audioview == null) {
 			footerlayout.removeAllViews();
-			audioplayer.createView(footerlayout);
+			audioPlayer.createView(footerlayout);
 			footerlayout.requestLayout();
 		}
-		audioplayer.play();
+		audioPlayer.play();
 	}
 
 	private void closeAudioPlayer(boolean hide) {
-		AudioPlayer.SharedInstance().stop();
-		// TODO 保存状态
+		audioPlayer.stop();
+		// 保存播放位置
+//		if (playingData.progress != 0) {
+//			MediaList.UpdateMediaItem(playingData);
+//		}
 		if (hide) {
 			LinearLayout audiolayout = (LinearLayout) findViewById(R.id.main_footer);
 			audiolayout.removeAllViewsInLayout();
@@ -457,11 +555,11 @@ public class Main extends Activity implements SensorEventListener {
 	}
 
 	private void pauseAudioPlayer() {
-		AudioPlayer.SharedInstance().pause();
+		audioPlayer.pause();
 	}
 
 	private void resumeAudioPlayer() {
-		AudioPlayer.SharedInstance().resume();
+		audioPlayer.resume();
 	}
 
 	private void showWaitingDialog() {
@@ -579,7 +677,7 @@ public class Main extends Activity implements SensorEventListener {
 					LayoutParams.MATCH_PARENT, true);
 			// setting.setAnimationStyle(R.style.AnimRight);
 
-			PreferenceUtility preferUtil = PreferenceUtility.sharedInstance();
+			PreferenceUtility preferUtil = PreferenceUtility.SharedInstance();
 			ToggleButton tbUseTraffic = (ToggleButton) setting.getContentView()
 					.findViewById(R.id.toggleUseTraffic);
 			tbUseTraffic.setChecked(preferUtil.getBoolean("UseTraffic", false));
@@ -588,7 +686,7 @@ public class Main extends Activity implements SensorEventListener {
 						@Override
 						public void onCheckedChanged(CompoundButton button,
 								boolean value) {
-							PreferenceUtility.sharedInstance().putBoolean(
+							PreferenceUtility.SharedInstance().putBoolean(
 									"UseTraffic", value);
 						}
 					});
@@ -602,7 +700,7 @@ public class Main extends Activity implements SensorEventListener {
 						@Override
 						public void onCheckedChanged(CompoundButton button,
 								boolean value) {
-							PreferenceUtility.sharedInstance().putBoolean(
+							PreferenceUtility.SharedInstance().putBoolean(
 									"AutoDownload", value);
 						}
 					});
@@ -615,7 +713,7 @@ public class Main extends Activity implements SensorEventListener {
 						@Override
 						public void onCheckedChanged(CompoundButton button,
 								boolean value) {
-							PreferenceUtility.sharedInstance().putBoolean(
+							PreferenceUtility.SharedInstance().putBoolean(
 									"AutoDelete", value);
 						}
 					});

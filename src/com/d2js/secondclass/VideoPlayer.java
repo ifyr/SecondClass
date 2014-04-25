@@ -91,9 +91,6 @@ public class VideoPlayer extends Activity implements OnCompletionListener,
 		this.isPaused = false;
 
 		String path = Main.instance.playingData.path;
-		if (path == null || path.isEmpty()) {
-			path = Main.instance.playingData.media;
-		}
 		this.progress = Main.instance.playingData.progress;
 
 		mediaPlayer = new MediaPlayer();
@@ -123,9 +120,13 @@ public class VideoPlayer extends Activity implements OnCompletionListener,
 
 	@Override
 	public void onResume() {
-		if (mediaPlayer != null && isPaused) {
-			mediaPlayer.start();
-			isPaused = false;
+		if (mediaPlayer != null) {
+			if (isPaused) {
+				mediaPlayer.start();
+				isPaused = false;
+			} else {
+				seekBar.setProgress(0);
+			}
 		}
 
 		super.onResume();

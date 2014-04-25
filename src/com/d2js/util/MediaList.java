@@ -13,12 +13,14 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 public class MediaList {
+	private static MediaList instance = null;
+
 	private SimpleDateFormat dateFormat = new SimpleDateFormat("yyMMdd",
 			Locale.CHINA);
 	private String readDate = Constants.DATE_FIRST_CONTENT;
 	private String today = null;
-	private HashMap<String, Object> data = new HashMap<String, Object>();
-	private static MediaList instance = null;
+	private HashMap<String, String> datalist = new HashMap<String, String>();
+	private HttpUtility httpUtil = null;
 
 	private MediaList() {
 		updateToday();
@@ -30,7 +32,7 @@ public class MediaList {
 		}
 		return instance;
 	}
-	
+
 	public static void UpdateToday() {
 		instance.updateToday();
 	}
@@ -44,31 +46,35 @@ public class MediaList {
 	}
 
 	public static int Count() {
-		return instance.data.size();
+		return instance.datalist.size();
 	}
 
-	public static boolean NeedLoad() {
-		return instance.needLoad();
+	public static boolean NeedUpdate() {
+		return instance.needUpdate();
 	}
 
 	public static void LoadSaved(String strSaved) {
 		SharedInstance().loadSaved(strSaved);
 	}
-
-	public void updateToday() {
-		today = dateFormat.format(new Date());
+	
+	public static boolean UpdateList() {
+		return instance.updateList();
 	}
 
-	public static boolean UpdateList(String strList) {
-		return instance.updateList(strList);
-	}
-
-	public static JSONObject ItemData(String date) {
+	public static String ItemData(String date) {
 		return instance.getItemData(date);
 	}
 
-	public static String MakeSaveString() {
-		return instance.makeSaveString();
+	public static void Save() {
+		instance.save();
+	}
+
+	public static void UpdateMediaItem(MediaItemData item) {
+		instance.updateMediaItem(item);
+	}
+
+	private void updateToday() {
+		today = dateFormat.format(new Date());
 	}
 
 	private void loadSaved(String strSaved) {
@@ -85,11 +91,6 @@ public class MediaList {
 		if (json == null || json.length() == 0) {
 			return;
 		}
-		// BUG FIX
-		if (json.has(Constants.DATE_FIRST_CONTENT)) {
-			// 如果没有第一天的内容，刷新全部内容
-			return;
-		}
 
 		String until_date = json.optString(Constants.JSONKEY_UNTILDATE);
 		if (until_date == null || until_date.isEmpty()) {
@@ -103,14 +104,20 @@ public class MediaList {
 		} catch (ParseException ex) {
 			return;
 		}
+		
+		// 假设系统时间准确
+		Calendar cal_since = dateFormat.getCalendar();
+		cal_since.setTime(new Date());
+		cal_since.add(Calendar.DAY_OF_MONTH, -15);
+		String date_since = dateFormat.format(cal_since.getTime());
 
 		Calendar cal = dateFormat.getCalendar();
 		cal.setTime(date_until);
 		String date = dateFormat.format(cal.getTime());
-		while (date.compareTo(Constants.DATE_FIRST_CONTENT) >= 0) {
+		while (date.compareTo(date_since) >= 0) {
 			JSONObject item = json.optJSONObject(date);
 			if (item != null && item.length() > 0) {
-				data.put(date, item);
+				datalist.put(date, item.toString());
 				if (date.compareTo(readDate) > 0) {
 					readDate = date;
 				}
@@ -121,7 +128,22 @@ public class MediaList {
 		}
 	}
 
-	private boolean updateList(String strList) {
+	private boolean updateList() {
+		if (httpUtil == null) {
+			String cookies = PreferenceUtility.SharedInstance().getString(
+					Constants.PREFKEY_COOKIE, "");
+			httpUtil = new HttpUtility(cookies);
+		}
+		// 假设系统时间准确
+		Calendar cal_read = dateFormat.getCalendar();
+		cal_read.setTime(new Date());
+		cal_read.add(Calendar.DAY_OF_MONTH, -15);
+		String date_read = dateFormat.format(cal_read.getTime());
+		if (readDate.compareTo(date_read) < 0) {
+			readDate = date_read;
+		}
+
+		String strList = httpUtil.getList(readDate);
 		if (strList == null || strList.isEmpty()) {
 			return false;
 		}
@@ -157,10 +179,10 @@ public class MediaList {
 		cal.setTime(date_since);
 		String date = dateFormat.format(cal.getTime());
 		while (date.compareTo(until_date) <= 0) {
-			if (!data.containsKey(date)) {
+			if (!datalist.containsKey(date)) {
 				JSONObject item = json.optJSONObject(date);
 				if (item != null && item.length() != 0) {
-					data.put(date, item);
+					datalist.put(date, item.toString());
 					if (date.compareTo(readDate) > 0) {
 						readDate = date;
 					}
@@ -174,31 +196,57 @@ public class MediaList {
 		return true;
 	}
 
-	private boolean needLoad() {
+	private boolean needUpdate() {
 		return today.compareTo(readDate) > 0;
 	}
 
-	private JSONObject getItemData(String date) {
-		if (data.containsKey(date)) {
-			return (JSONObject) data.get(date);
+	private String getItemData(String date) {
+		if (datalist.containsKey(date)) {
+			return datalist.get(date);
 		}
 		return null;
 	}
 
-	private String makeSaveString() {
+	private void save() {
 		JSONObject json = new JSONObject();
 		try {
 			json.put(Constants.JSONKEY_UNTILDATE, readDate);
+		} catch (JSONException e) {
+			return;
+		}
 
-			Set<String> keys = data.keySet();
-			Iterator<String> itor = keys.iterator();
-			while (itor.hasNext()) {
-				String key = itor.next();
-				json.put(key, data.get(key));
+		Set<String> keys = datalist.keySet();
+		Iterator<String> itor = keys.iterator();
+		while (itor.hasNext()) {
+			String key = itor.next();
+			try {
+				json.put(key, new JSONObject(datalist.get(key)));
+			} catch (JSONException e) {
+			}
+		}
+
+		PreferenceUtility.SharedInstance().putString(
+				Constants.PREFKEY_LIST, json.toString());
+	}
+
+	private void updateMediaItem(MediaItemData data) {
+		try {
+			JSONObject json = new JSONObject(datalist.get(data.date));
+			if (json.has("content" + data.content)) {
+				JSONObject item = new JSONObject();
+				item.put("media", data.media);
+				item.put("title", data.title);
+				item.put("subject", data.subject);
+				item.put("length", data.length);
+				item.put("progress", data.progress);
+				item.put("path", data.path);
+				item.put("download", data.download);
+				
+				json.put("content" + data.content, item);
+				datalist.put(data.date, json.toString());				
+				save();
 			}
 		} catch (JSONException e) {
 		}
-
-		return json.toString();
 	}
 }

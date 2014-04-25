@@ -1,5 +1,4 @@
 <resources>
-
     <string name="app_name">第二教室</string>
     <string name="main_title">第二教室</string>
     <string name="settings_title">设置</string>
@@ -11,12 +10,11 @@
     <string name="welcome_title">欢迎</string>
     <string name="loading">正在获取最新内容…</string>
     <string name="header_refresh">获取最新内容</string>
-    <string name="footer_title">上次\n播放</string>
-    <string name="footer_name">上次播放的内容的相应标题</string>
-    <string name="footer_info">已播放：00分00秒</string>
-    <string name="footer_resume">继续播放</string>
     <string name="audio">音频</string>
     <string name="video">视频</string>
+    <string name="action">播放</string>
+    <string name="media_title">音频或者视频内容的标题不限长度</string>
+    <string name="media_length">1.00MB 4分60秒</string>
     <string name="downloadable">可下载</string>
     <string name="downloading">下载中…0%</string>
     <string name="downloaded">已下载</string>
@@ -27,5 +25,10 @@
     <string name="autodownload_description">选项打开时，自动下载内容保证播放流畅，建议2G和3G流量有限的同学关闭此选项。</string>
     <string name="autodelete">自动删除一周以前的缓存</string>
     <string name="autodelete_description">选项关闭时，将自动缓存一个月的内容，建议手机空间有限的同学打开此选项。</string>
-    
-</resources>
+    <string name="time_played">00:00</string>
+    <string name="time_rest">-00:00</string>
+    <string name="hint_title">上次\n播放</string>
+    <string name="hint_name">上次播放的内容的相应标题</string>
+    <string name="hint_info">已播放：00分00秒</string>
+    <string name="hint_resume">继续播放</string>
+</resources>

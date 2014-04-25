@@ -19,21 +19,11 @@ import org.apache.http.util.EntityUtils;
 import android.os.AsyncTask;
 
 public class HttpUtility {
-	private static HttpUtility instance = null;
 	private HashMap<String, String> cookieContainer = null;
 
-	private HttpUtility(String cookies) {
+	public HttpUtility(String cookies) {
 		cookieContainer = new HashMap<String, String>();
 		parseCookie(cookies);
-	}
-
-	public static HttpUtility SharedInstance() {
-		if (instance == null) {
-			String cookies = PreferenceUtility.sharedInstance().getString(
-					Constants.PREFKEY_COOKIE, "");
-			instance = new HttpUtility(cookies);
-		}
-		return instance;
 	}
 
 	public void parseCookie(String cookies) {

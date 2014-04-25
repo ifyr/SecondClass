@@ -1,60 +1,65 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/hint_layout"
+    android:layout_width="match_parent"
+    android:layout_height="60dp"
     android:layout_gravity="top"
     android:background="#fcc"
-    android:orientation="horizontal"
-    android:layout_height="60dp"
-	android:layout_width="match_parent">    
+    android:orientation="horizontal" >
 
     <TextView
+        android:id="@+id/hint_title"
         android:layout_width="60dp"
         android:layout_height="match_parent"
+        android:layout_alignParentLeft="true"
         android:layout_gravity="center"
         android:background="#f66"
+        android:gravity="center"
         android:lineSpacingExtra="2dp"
-        android:paddingBottom="6dp"
-        android:paddingLeft="10dp"
-        android:paddingRight="10dp"
-        android:paddingTop="6dp"
-        android:text="@string/footer_title"
+        android:text="@string/hint_title"
         android:textColor="#333"
-        android:textSize="18sp" />
-
-    <LinearLayout
-        android:layout_width="200dp"
-        android:layout_height="match_parent"
-        android:layout_gravity="top"
-        android:orientation="vertical"
-        android:paddingLeft="10dp"
-        android:paddingTop="6dp" >
-
-        <TextView
-            android:id="@+id/footer_name"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:ellipsize="marquee"
-            android:singleLine="true"
-            android:text="@string/footer_name"
-            android:textColor="#333"
-            android:textSize="18sp" />
-
-        <TextView
-            android:id="@+id/footer_info"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/footer_info"
-            android:textColor="#333"
-            android:textSize="18sp" />
-    </LinearLayout>
+        android:textSize="18sp"
+        android:textStyle="bold" />
 
     <ImageView
-        android:id="@+id/footer_resume"
+        android:id="@+id/hint_resume"
         android:layout_width="56dp"
         android:layout_height="match_parent"
+        android:layout_alignParentRight="true"
+        android:layout_marginRight="5dp"
         android:clickable="true"
-        android:contentDescription="@string/footer_resume"
+        android:contentDescription="@string/hint_resume"
         android:scaleType="centerInside"
         android:src="@drawable/resume" />
 
-</LinearLayout>
+    <TextView
+        android:id="@+id/hint_name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp"
+        android:layout_marginTop="5dp"
+        android:layout_toLeftOf="@id/hint_resume"
+        android:layout_toRightOf="@id/hint_title"
+        android:ellipsize="marquee"
+        android:singleLine="true"
+        android:text="@string/hint_name"
+        android:textColor="#333"
+        android:textSize="18sp" />
+
+    <TextView
+        android:id="@+id/hint_info"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/hint_name"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp"
+        android:layout_marginTop="5dp"
+        android:layout_toLeftOf="@id/hint_resume"
+        android:layout_toRightOf="@id/hint_title"
+        android:text="@string/hint_info"
+        android:textColor="#333"
+        android:textSize="16sp" />
+
+</RelativeLayout>

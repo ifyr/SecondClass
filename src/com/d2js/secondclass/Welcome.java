@@ -1,20 +1,17 @@
 package com.d2js.secondclass;
 
 import com.d2js.util.Constants;
-import com.d2js.util.HttpUtility;
 import com.d2js.util.MediaList;
 import com.d2js.util.PreferenceUtility;
 import com.d2js.util.SystemUtility;
 
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Message;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
 import android.widget.Toast;
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
 
@@ -38,119 +35,55 @@ public class Welcome extends Activity {
 	@Override
 	public void onResume() {
 		super.onResume();
-		messageHandler.sendEmptyMessageDelayed(Constants.MSG_LOAD_ACTIVITY, 1000);
-	}
-	
-	@Override
-	public void onPause() {
-		messageHandler.removeCallbacksAndMessages(null);
-		super.onPause();
-	}
-	
-	@Override
-	public void onStop() {
-		super.onStop();
-		this.finish();
-	}
-	
-	@Override
-	public void onDestroy() {
-		messageHandler.removeCallbacksAndMessages(null);
-		super.onDestroy();
-	}
 
-	@SuppressLint("HandlerLeak")
-	private Handler messageHandler = new Handler() {
-		@Override
-		public void handleMessage(Message msg) {
-			switch (msg.what) {
-			case Constants.MSG_LOAD_ACTIVITY:
-				if (!loading) {
-					Welcome.this.checkLoad();
+		if (!loading) {
+			loading = true;
+			loadingView.setVisibility(View.VISIBLE);
+			Animation circling = AnimationUtils
+					.loadAnimation(this, R.anim.circling);
+			loadingImage.startAnimation(circling);
+
+			new Handler().postDelayed(new Runnable() {
+				@Override
+				public void run() {
+					readData();
 				}
-				break;
-			case Constants.MSG_NET_NONE:
-				onNetNone();
-				break;
-			case Constants.MSG_LOAD_LISTDATA:
-				onLoadList((String) msg.obj);
-				break;
-			default:
-				super.handleMessage(msg);
-				break;
-			}
-		}
-	};
-
-	private void checkLoad() {
-		if (loading) {
-			return;
-		}
-		loading = true;
-
-		loadingView.setVisibility(View.VISIBLE);
-		Animation circling = AnimationUtils
-				.loadAnimation(this, R.anim.circling);
-		loadingImage.startAnimation(circling);
-
-		MediaList.LoadSaved(preferUtil.getString(Constants.PREFKEY_LIST, ""));
-		int networkState = SystemUtility.getNetworkStatus(this);
-		if (networkState == Constants.STATE_NETWORK_NONE) {
-			Message.obtain(messageHandler, Constants.MSG_NET_NONE, networkState, 0,
-					null).sendToTarget();
-			return;
-		}
-		if (MediaList.NeedLoad()) {
-			readData();
-		} else {
-			showMain();
+			}, 1000);
 		}
 	}
 
 	private void readData() {
-		String strList = HttpUtility.SharedInstance().getList(
-				MediaList.ReadDate());
-		Message.obtain(messageHandler, Constants.MSG_LOAD_LISTDATA, strList)
-				.sendToTarget();
-	}
+		MediaList.LoadSaved(preferUtil.getString(Constants.PREFKEY_LIST, ""));
 
-	private void onLoadList(String strList) {
-		boolean updated = MediaList.UpdateList(strList);
-		if (updated) {
-			preferUtil.putString(Constants.PREFKEY_LIST,
-					MediaList.MakeSaveString());
-			if (MediaList.NeedLoad()) {
-				readData();
+		if (MediaList.NeedUpdate()) {
+			if (SystemUtility.getNetworkStatus(this) == Constants.STATE_NETWORK_NONE) {
+				Toast.makeText(this, "没有网络，无法加载新内容", Toast.LENGTH_SHORT).show();
 			} else {
-				showMain();
+				do {
+					if(!MediaList.UpdateList()) {
+						break;
+					}
+				} while(MediaList.NeedUpdate());
+
+				if (MediaList.NeedUpdate()) {
+					Toast.makeText(this, "加载内容失败，请检查网络", Toast.LENGTH_SHORT).show();
+				} else {
+					MediaList.Save();
+				}
 			}
-		} else {
-			Toast.makeText(this, "加载内容失败，请检查网络", Toast.LENGTH_SHORT).show();
-			showMain();
 		}
-	}
 
-	private void onNetNone() {
-		if (MediaList.NeedLoad()) {
-			Toast.makeText(this, "没有网络，无法加载新内容", Toast.LENGTH_SHORT).show();
-		}
-		showMain();
-	}
-
-	private void showMain() {
 		loading = false;
 		loadingImage.clearAnimation();
 		loadingView.setVisibility(View.INVISIBLE);
 
-		messageHandler.postDelayed(runMain, 100);
+		new Handler().postDelayed(new Runnable() {
+			@Override
+			public void run() {
+				Intent intent = new Intent(Welcome.this, Main.class);
+				startActivity(intent);
+				Welcome.this.finish();
+			}
+		}, 100);
 	}
-	
-	private Runnable runMain = new Runnable() {
-		@Override
-		public void run() {
-			Intent intent = new Intent(Welcome.this, Main.class);
-			startActivity(intent);
-			Welcome.this.finish();
-		}
-	};
 }

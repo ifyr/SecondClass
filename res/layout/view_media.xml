@@ -3,10 +3,11 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_gravity="top"
+    android:background="#f7f7f7"
     android:orientation="vertical" >
 
     <TextView
-        android:id="@+id/item_audiotitle"
+        android:id="@+id/item_mediatitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:ellipsize="end"
@@ -15,11 +16,11 @@
         android:paddingRight="10dp"
         android:paddingTop="4dp"
         android:singleLine="true"
-        android:text="@string/space"
+        android:text="@string/media_title"
         android:textColor="#333"
         android:textSize="24sp" />
 
-    <LinearLayout
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
@@ -27,32 +28,36 @@
         android:paddingRight="10dp"
         android:paddingTop="0dp" >
 
-        <LinearLayout
-            android:id="@+id/item_audiostatus"
-            android:layout_width="212dp"
-            android:layout_height="wrap_content"
-            android:orientation="vertical" >
-
-            <TextView
-                android:id="@+id/item_audiolength"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/space"
-                android:textColor="#666"
-                android:textSize="18sp" />
-
-        </LinearLayout>
-
         <ImageView
-            android:id="@+id/item_audioaction"
+            android:id="@+id/item_mediaaction"
             android:layout_width="80dp"
             android:layout_height="80dp"
+            android:layout_alignParentRight="true"
             android:clickable="true"
-            android:contentDescription="@string/audio"
+            android:contentDescription="@string/action"
             android:gravity="right"
             android:paddingTop="6dp"
             android:src="@drawable/audio" />
-    </LinearLayout>
+
+        <TextView
+            android:id="@+id/item_medialength"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_toLeftOf="@id/item_mediaaction"
+            android:text="@string/media_length"
+            android:textColor="#666"
+            android:textSize="18sp" />
+
+        <LinearLayout
+            android:id="@+id/item_mediastatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/item_medialength"
+            android:layout_toLeftOf="@id/item_mediaaction"
+            android:orientation="vertical" >
+        </LinearLayout>
+    </RelativeLayout>
 
     <View
         android:layout_width="fill_parent"

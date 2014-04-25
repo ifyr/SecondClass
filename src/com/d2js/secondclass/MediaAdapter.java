@@ -7,16 +7,21 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.d2js.util.Constants;
+import com.d2js.util.MediaItemData;
 import com.d2js.util.MediaList;
 
 import android.content.Context;
 import android.os.Message;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -25,16 +30,18 @@ import android.widget.TextView;
 public class MediaAdapter extends BaseAdapter {
 	private SimpleDateFormat dateFormat = new SimpleDateFormat("yyMMdd",
 			Locale.CHINA);
-	private ArrayList<String> itemDates = null;
+	private ArrayList<ItemData> itemlist = null;
 	private int count = 0;
 	private LayoutInflater inflater = null;
 	private String readDate = null;
+	private Context context = null;
 
 	public MediaAdapter(Context context) {
-		inflater = LayoutInflater.from(context);
-		itemDates = new ArrayList<String>();
+		this.context = context;
+		this.inflater = LayoutInflater.from(context);
+		this.itemlist = new ArrayList<ItemData>();
 
-		readDate = MediaList.ReadDate();
+		this.readDate = MediaList.ReadDate();
 		if (!Constants.DATE_FIRST_CONTENT.equals(readDate)) {
 			Calendar cal = dateFormat.getCalendar();
 			Date dateRead = null;
@@ -46,37 +53,53 @@ public class MediaAdapter extends BaseAdapter {
 			cal.setTime(dateRead);
 			String date = dateFormat.format(cal.getTime());
 			while (date.compareTo(Constants.DATE_FIRST_CONTENT) >= 0) {
-				JSONObject json = MediaList.ItemData(date);
-				if (json != null) {
-					itemDates.add(date);
+				try {
+					String itemdata = MediaList.ItemData(date);
+					if (itemdata != null && !itemdata.isEmpty()) {
+						JSONObject json = new JSONObject(
+								MediaList.ItemData(date));
+						if (json != null) {
+							ItemData data = new ItemData(date);
+							data.dateLocale = json.optString("date", null);
+							for (int i = 0; i < 5; i++) {
+								if (json.has("content" + i)) {
+									JSONObject content = json
+											.optJSONObject("content" + i);
+									data.contents.add(new MediaItemData(date,
+											i, content));
+								}
+							}
+							itemlist.add(data);
+						}
+					}
+				} catch (JSONException e) {
 				}
-
 				cal.add(Calendar.DAY_OF_MONTH, -1);
 				date = dateFormat.format(cal.getTime());
 			}
 		}
-		count = itemDates.size();
+		this.count = itemlist.size();
 	}
 
 	@Override
 	public int getCount() {
-		return count;
+		return this.count;
 	}
 
 	@Override
 	public Object getItem(int position) {
-		if (position > 0 && position < count) {
-			return itemDates.get(position);
+		if (position > 0 && position < this.count) {
+			return this.itemlist.get(position);
 		}
 		return null;
 	}
 
 	@Override
 	public long getItemId(int position) {
-		if (position > 0 && position < count) {
-			String date = itemDates.get(position);
+		if (position >= 0 && position < this.count) {
+			ItemData item = this.itemlist.get(position);
 			try {
-				return Integer.parseInt(date);
+				return Integer.parseInt(item.date);
 			} catch (NumberFormatException ex) {
 				return 0;
 			}
@@ -89,17 +112,14 @@ public class MediaAdapter extends BaseAdapter {
 		if (convertView == null) {
 			convertView = inflater.inflate(R.layout.panel_item, null);
 		}
-		updateView(convertView, itemDates.get(position));
+		updateView(convertView, itemlist.get(position));
 		return convertView;
 	}
 
 	@Override
 	public void notifyDataSetChanged() {
-		if (this.count == MediaList.Count()) {
-			return;
-		}
-
-		if (!MediaList.ReadDate().equals(readDate)) {
+		if (this.count != MediaList.Count()
+				|| !MediaList.ReadDate().equals(readDate)) {
 			Calendar cal = dateFormat.getCalendar();
 			Date read = null;
 			try {
@@ -111,32 +131,34 @@ public class MediaAdapter extends BaseAdapter {
 			String date = dateFormat.format(cal.getTime());
 			readDate = MediaList.ReadDate();
 			while (date.compareTo(readDate) <= 0) {
-				JSONObject json = MediaList.ItemData(date);
-				if (json != null) {
-					itemDates.add(0, date);
+				try {
+					JSONObject json = new JSONObject(MediaList.ItemData(date));
+					if (json != null) {
+						ItemData data = new ItemData(date);
+						data.dateLocale = json.optString("date", null);
+						for (int i = 0; i < Constants.MAX_MEDIA_COUNT; i++) {
+							if (json.has("content" + i)) {
+								JSONObject content = json
+										.optJSONObject("content" + i);
+								data.contents.add(new MediaItemData(date, i,
+										content));
+							}
+						}
+						itemlist.add(0, data);
+					}
+				} catch (JSONException ex) {
 				}
-
 				cal.add(Calendar.DAY_OF_MONTH, 1);
 				date = dateFormat.format(cal.getTime());
 			}
 		}
-		count = itemDates.size();
-
+		count = itemlist.size();
 		super.notifyDataSetChanged();
 	}
 
-	private void updateView(View view, String date) {
-		JSONObject json = MediaList.ItemData(date);
-		if (json == null) {
-			return;
-		}
-
+	private void updateView(View view, ItemData item) {
 		TextView item_date = (TextView) view.findViewById(R.id.item_date);
-		item_date.setText(json.optString("date", date));
-
-		LinearLayout.LayoutParams match_wrap = new LinearLayout.LayoutParams(
-				LinearLayout.LayoutParams.MATCH_PARENT,
-				LinearLayout.LayoutParams.WRAP_CONTENT);
+		item_date.setText(item.dateLocale);
 
 		LinearLayout layout_audio = (LinearLayout) view
 				.findViewById(R.id.item_audio);
@@ -145,114 +167,180 @@ public class MediaAdapter extends BaseAdapter {
 
 		int audio_count = 0, video_count = 0;
 
-		for (int i = 0; i < 5; i++) {
-			String contentKey = "content" + i;
-			JSONObject content = json.optJSONObject(contentKey);
-			if (content == null || content.length() == 0) {
+		for (int i = 0; i < item.contents.size(); i++) {
+			MediaItemData data = item.contents.get(i);
+			if (data.media == null || data.media.isEmpty()) {
 				continue;
 			}
-			String media = content.optString("media");
-			if (media == null || media.isEmpty()) {
-				continue;
-			}
-			if (media.endsWith("mp3")) {
-				View audioview = layout_audio.getChildAt(audio_count);
-				if (audioview == null) {
-					audioview = inflater.inflate(R.layout.view_audio, null);
-					layout_audio.addView(audioview, match_wrap);
-				}
-				updateAudioView(audioview, content, date, i);
-				audio_count++;
+
+			View itemview = null;
+			LinearLayout layout = null;
+			if (data.media.endsWith("mp3")) {
+				layout = layout_audio;
+				itemview = layout.getChildAt(audio_count);
+				audio_count ++;
 			} else {
-				View videoview = layout_video.getChildAt(video_count);
-				if (videoview == null) {
-					videoview = inflater.inflate(R.layout.view_video, null);
-					layout_video.addView(videoview, match_wrap);
-				}
-				updateVideoView(videoview, content, date, i);
-				video_count++;
+				layout = layout_video;
+				itemview = layout.getChildAt(video_count);
+				video_count ++;
 			}
+			if (itemview == null) {
+				itemview = inflater.inflate(R.layout.view_media, null);
+				layout.addView(itemview,
+						LinearLayout.LayoutParams.MATCH_PARENT,
+						LinearLayout.LayoutParams.WRAP_CONTENT);
+			}
+			updateItemView(itemview, data);
 		}
 
+		boolean needRequestLayout = false;
 		if (layout_audio.getChildCount() > audio_count) {
 			layout_audio.removeViewsInLayout(audio_count,
 					layout_audio.getChildCount() - audio_count);
 			layout_audio.requestLayout();
+			needRequestLayout = true;
 		}
 
 		if (layout_video.getChildCount() > video_count) {
 			layout_video.removeViewsInLayout(video_count,
 					layout_video.getChildCount() - video_count);
 			layout_video.requestLayout();
+			needRequestLayout = true;
 		}
-		view.requestLayout();
+
+		if(needRequestLayout) {
+			view.requestLayout();
+		}
 	}
 
-	private void updateAudioView(View view, JSONObject json, String date,
-			int content) {
-		String title = json.optString("title");
-		String subject = json.optString("subject");
-		TextView titleView = (TextView) view.findViewById(R.id.item_audiotitle);
-		if (subject == null || subject.isEmpty()) {
-			titleView.setText(title);
+	private void updateItemView(View view, final MediaItemData data) {
+		TextView titleView = (TextView) view.findViewById(R.id.item_mediatitle);
+		if (data.subject == null || data.subject.isEmpty()) {
+			titleView.setText(data.title);
 		} else {
-			titleView.setText("[" + subject + "]" + title);
+			titleView.setText("[" + data.subject + "]" + data.title);
 		}
 
-		String length = json.optString("length", "60秒");
 		TextView lengthView = (TextView) view
-				.findViewById(R.id.item_audiolength);
-		lengthView.setText(length);
+				.findViewById(R.id.item_medialength);
+		lengthView.setText(data.length);
 
-		final String item_date = date;
-		final int item_content = content;
+		LinearLayout audiostatus = (LinearLayout) view
+				.findViewById(R.id.item_mediastatus);
+		updateStatusView(audiostatus, data);
+
 		ImageView imageView = (ImageView) view
-				.findViewById(R.id.item_audioaction);
+				.findViewById(R.id.item_mediaaction);
+		if (data.media.endsWith("mp3")) {
+			imageView.setImageResource(R.drawable.audio);
+		} else {
+			imageView.setImageResource(R.drawable.video);
+		}
 		imageView.setClickable(true);
 		imageView.setOnClickListener(new View.OnClickListener() {
-			String date = item_date;
-			int content = item_content;
-
 			@Override
 			public void onClick(View v) {
 				Message.obtain(Main.instance.getHandler(),
-						Constants.MSG_PLAY_AUDIO, content, 0, date)
-						.sendToTarget();
+						Constants.MSG_PLAY_MEDIA, data).sendToTarget();
 			}
 		});
 	}
 
-	private void updateVideoView(View view, JSONObject json, String date,
-			int content) {
-		String title = json.optString("title");
-		String subject = json.optString("subject");
-		TextView titleView = (TextView) view.findViewById(R.id.item_videotitle);
-		if (subject == null || subject.isEmpty()) {
-			titleView.setText(title);
-		} else {
-			titleView.setText("[" + subject + "]" + title);
-		}
+	public void updateStatusView(LinearLayout layout, final MediaItemData data) {
+		Log.v("MediaAdapter", "download:" + data.download + " media:"
+				+ data.media);
+		if (data.download < 0) {
+			View status = layout.findViewById(R.layout.status_downloadable);
+			if (status == null) {
+				layout.removeAllViewsInLayout();
 
-		String length = json.optString("length", "未知长度");
-		TextView lengthView = (TextView) view
-				.findViewById(R.id.item_videolength);
-		lengthView.setText(length);
-
-		final String item_date = date;
-		final int item_content = content;
-		ImageView imageView = (ImageView) view
-				.findViewById(R.id.item_videoaction);
-		imageView.setClickable(true);
-		imageView.setOnClickListener(new View.OnClickListener() {
-			String date = item_date;
-			int content = item_content;
-
-			@Override
-			public void onClick(View v) {
-				Message.obtain(Main.instance.getHandler(),
-						Constants.MSG_PLAY_VIDEO, content, 0, date)
-						.sendToTarget();
+				status = inflater.inflate(R.layout.status_downloadable, null);
+				layout.addView(status, LinearLayout.LayoutParams.MATCH_PARENT,
+						LinearLayout.LayoutParams.WRAP_CONTENT);
 			}
-		});
+			ImageView downloadable = (ImageView) status
+					.findViewById(R.id.status_image_downloadable);
+			downloadable.setClickable(true);
+			downloadable.setOnClickListener(new View.OnClickListener() {
+				@Override
+				public void onClick(View v) {
+					Message.obtain(Main.instance.getHandler(),
+							Constants.MSG_MEDIA_DOWNLOAD, data).sendToTarget();
+				}
+			});
+		} else if (data.download > 100) {
+			View status = layout.findViewById(R.layout.status_downloaded);
+			if (status == null) {
+				layout.removeAllViewsInLayout();
+
+				status = inflater.inflate(R.layout.status_downloaded, null);
+				layout.addView(status, LinearLayout.LayoutParams.MATCH_PARENT,
+						LinearLayout.LayoutParams.WRAP_CONTENT);
+			}
+			ImageView downloaded = (ImageView) status
+					.findViewById(R.id.status_image_downloaded);
+			downloaded.setClickable(true);
+			downloaded.setOnClickListener(new View.OnClickListener() {
+				@Override
+				public void onClick(View v) {
+					Message.obtain(Main.instance.getHandler(),
+							Constants.MSG_MEDIA_DELETE, data).sendToTarget();
+				}
+			});
+		} else {
+			View status = layout.findViewById(R.layout.status_downloading);
+			if (status == null) {
+				layout.removeAllViewsInLayout();
+
+				status = inflater.inflate(R.layout.status_downloading, null);
+				layout.addView(status, LinearLayout.LayoutParams.MATCH_PARENT,
+						LinearLayout.LayoutParams.WRAP_CONTENT);
+
+				ImageView downloading = (ImageView) status
+						.findViewById(R.id.status_image_downloading);
+				Animation circling = AnimationUtils.loadAnimation(context,
+						R.anim.circling);
+				downloading.startAnimation(circling);
+			}
+			String strProgress = null;
+			if (data.progress >= 100) {
+				strProgress = "下载完成";
+			} else if (data.progress <= 0) {
+				strProgress = "等待下载";
+			} else {
+				strProgress = "下载中…" + data.progress + "%";
+			}
+			TextView progress = (TextView) status
+					.findViewById(R.id.status_text_downloading);
+			progress.setText(strProgress);
+		}
 	}
+
+	public void updateMediaItem(MediaItemData data) {
+		for (int i = 0; i < this.itemlist.size(); i++) {
+			ItemData item = itemlist.get(i);
+			if (item.date.equals(data.date)) {
+				for (int j = 0; j < item.contents.size(); j++) {
+					MediaItemData content = item.contents.get(j);
+					if (content.equals(data)) {
+						item.contents.set(j, data);
+						notifyDataSetChanged();
+						return;
+					}
+				}
+			}
+		}
+	}
+
+	class ItemData {
+		public String date = null;
+		public String dateLocale = null;
+		public ArrayList<MediaItemData> contents = null;
+
+		public ItemData(String date) {
+			this.date = date;
+			this.dateLocale = null;
+			this.contents = new ArrayList<MediaItemData>();
+		}
+	};
 }

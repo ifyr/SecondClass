@@ -20,7 +20,7 @@ public class PreferenceUtility {
 		return instance;
 	}
 
-	public static PreferenceUtility sharedInstance() {
+	public static PreferenceUtility SharedInstance() {
 		return instance;
 	}
 

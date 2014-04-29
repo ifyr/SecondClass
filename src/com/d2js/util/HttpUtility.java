@@ -1,6 +1,7 @@
 package com.d2js.util;
 
 import java.io.IOException;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map.Entry;
@@ -63,7 +64,7 @@ public class HttpUtility {
 			httpRequest.addHeader("cookie", cookies);
 		}
 	}
-	
+
 	protected String doDownload(String url) {
 		// HttpGet对象
 		HttpGet httpRequest = new HttpGet(url);
@@ -79,8 +80,7 @@ public class HttpUtility {
 				// 更新Cookie
 				updateCookies(httpResponse);
 				// 取得返回的数据
-				strResult = EntityUtils.toString(httpResponse
-						.getEntity());
+				strResult = EntityUtils.toString(httpResponse.getEntity());
 			} else {
 				strResult = "{\"code\":600,\"message\":\"Http status error\"}";
 			}
@@ -89,9 +89,9 @@ public class HttpUtility {
 		} catch (IOException e) {
 			strResult = "{\"code\":602,\"message\":\"IO exception\"}";
 		}
-		return strResult;		
+		return strResult;
 	}
-	
+
 	class DownloadTask extends AsyncTask<String, Integer, String> {
 		@Override
 		protected String doInBackground(String... urls) {
@@ -105,7 +105,8 @@ public class HttpUtility {
 		try {
 			strResult = task.execute(
 					"http://dierjiaoshi.duapp.com/wechat/appdata.php?s="
-							+ sinceDate).get();
+							+ sinceDate).get()
+					+ "&t=" + (new Date()).getTime();
 		} catch (InterruptedException e) {
 		} catch (ExecutionException e) {
 		} finally {

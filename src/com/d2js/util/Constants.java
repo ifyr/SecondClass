@@ -33,6 +33,9 @@ public class Constants {
 	public static final int MSG_MEDIA_DOWNLOAD = 32;
 	public static final int MSG_MEDIA_RECEIVED = 33;
 	public static final int MSG_MEDIA_DELETE = 34;
+	public static final int MSG_CONFIRM_YES = 35;
+	public static final int MSG_CONFIRM_NO = 36;
+	public static final int MSG_RELOAD_LIST = 37;
 
 	public static final String DATE_FIRST_CONTENT = "140303";
 	

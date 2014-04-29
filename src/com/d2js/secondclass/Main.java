@@ -1,5 +1,6 @@
 package com.d2js.secondclass;
 
+import java.io.File;
 import java.util.ArrayList;
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -15,8 +16,10 @@ import android.os.Handler;
 import android.os.Message;
 import android.os.PowerManager;
 import android.text.format.Time;
+import android.view.GestureDetector;
 import android.view.Gravity;
 import android.view.KeyEvent;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup.LayoutParams;
@@ -34,7 +37,8 @@ import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import com.d2js.util.Constants;
-import com.d2js.util.HttpdUtility;
+import com.d2js.util.GestureListener;
+// import com.d2js.util.HttpdUtility;
 import com.d2js.util.MediaList;
 import com.d2js.util.MediaItemData;
 import com.d2js.util.MediaUtility;
@@ -51,7 +55,7 @@ public class Main extends Activity implements SensorEventListener {
 	private static final int REQUESTCODE_VIDEOPLAYER = 0;
 
 	public MediaItemData playingData = null;
-	private HttpdUtility httpd = null;
+	// private HttpdUtility httpd = null;
 	private AudioPlayer audioPlayer = null;
 	private ArrayList<MediaItemData> downloadList = null;
 
@@ -60,6 +64,7 @@ public class Main extends Activity implements SensorEventListener {
 	private PopupWindow waiting = null;
 	private ListView medialist = null;
 	private MediaAdapter mediaAdapter = null;
+	private GestureDetector detector = null;
 
 	private AudioManager audioManager = null;
 	private SensorManager sensorManager = null;
@@ -89,31 +94,47 @@ public class Main extends Activity implements SensorEventListener {
 
 		downloadList = new ArrayList<MediaItemData>();
 
+		detector = new GestureDetector(this, new GestureListener());
 		sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
 		powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
 		wakeLock = powerManager.newWakeLock(32, "WakeLock");
 		audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
 		audioMode = audioManager.getMode();
 
-		ImageView btnSetting = (ImageView) this
+		View mainHeader = findViewById(R.id.main_header);
+		mainHeader.setOnTouchListener(new View.OnTouchListener() {
+			@Override
+			public boolean onTouch(View v, MotionEvent event) {
+				switch (event.getAction()) {
+				case MotionEvent.ACTION_DOWN:
+				case MotionEvent.ACTION_UP:
+				case MotionEvent.ACTION_MOVE:
+					return detector.onTouchEvent(event);
+				default:
+					return false;
+				}
+			}
+		});
+
+		ImageView btnSetting = (ImageView) mainHeader
 				.findViewById(R.id.header_setting);
 		btnSetting.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				Main.this.showConfirmDialog("标题", "确认要关闭\n此对话框吗？");
+				Main.this.showSettingDialog();
 			}
 		});
 
-		medialist = (ListView) findViewById(R.id.main_list);
-
-		View refreshView = findViewById(R.id.panel_refresh);
+		View refreshView = mainHeader.findViewById(R.id.panel_refresh);
 		refreshView.setClickable(true);
 		refreshView.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View arg0) {
-				Main.this.onRefreshData();
+				Main.this.refreshMediaList();
 			}
 		});
+
+		medialist = (ListView) findViewById(R.id.main_list);
 	}
 
 	@Override
@@ -151,7 +172,7 @@ public class Main extends Activity implements SensorEventListener {
 				hideConfirmDialog();
 				hideSettingDialog();
 
-				onRefreshData();
+				refreshMediaList();
 			}
 			return true;
 		}
@@ -167,13 +188,27 @@ public class Main extends Activity implements SensorEventListener {
 		sensorManager.registerListener(this,
 				sensorManager.getDefaultSensor(Sensor.TYPE_ORIENTATION), // 方向传感器
 				SensorManager.SENSOR_DELAY_NORMAL);
-		if (statusPlaying == Constants.STATE_PLAYING_AUDIO) {
-			resumeAudioPlayer();
-		}
 
 		super.onResume();
 		messageHandler.sendEmptyMessageDelayed(Constants.MSG_LOAD_ACTIVITY,
 				1000);
+	}
+
+	@Override
+	public void onWindowFocusChanged(boolean hasFocus) {
+		super.onWindowFocusChanged(hasFocus);
+
+		if (hasFocus) {
+			if (statusPlaying == Constants.STATE_PLAYING_AUDIO
+					&& audioPlayer.isPaused()) {
+				resumeAudioPlayer();
+			}
+		} else {
+			if (statusPlaying == Constants.STATE_PLAYING_AUDIO
+					&& audioPlayer.isPlaying()) {
+				pauseAudioPlayer();
+			}
+		}
 	}
 
 	@Override
@@ -184,9 +219,6 @@ public class Main extends Activity implements SensorEventListener {
 		if (wakeLock.isHeld()) {
 			wakeLock.setReferenceCounted(false);
 			wakeLock.release();
-		}
-		if (statusPlaying == Constants.STATE_PLAYING_AUDIO) {
-			pauseAudioPlayer();
 		}
 		messageHandler.removeCallbacksAndMessages(null);
 
@@ -259,16 +291,22 @@ public class Main extends Activity implements SensorEventListener {
 			Intent intent) {
 		if (requestCode == REQUESTCODE_VIDEOPLAYER) {
 			// 保存播放位置
-//			if (resultCode == RESULT_OK) {
-//				if (playingData.progress != 0) {
-//					MediaList.UpdateMediaItem(playingData);
-//				}
-//			}
+			// if (resultCode == RESULT_OK) {
+			// if (playingData.progress != 0) {
+			// MediaList.UpdateMediaItem(playingData);
+			// }
+			// }
 			statusPlaying = Constants.STATE_PLAYING_NONE;
 		}
 	}
+	
+	public void reloadMediaList() {
+		MediaList.Clear();
+		mediaAdapter.clear();
+		refreshMediaList();
+	}
 
-	protected void onRefreshData() {
+	public void refreshMediaList() {
 		MediaList.UpdateToday();
 		if (!MediaList.NeedUpdate()) {
 			Toast.makeText(this, "已是最新内容，无需刷新", Toast.LENGTH_SHORT).show();
@@ -299,6 +337,7 @@ public class Main extends Activity implements SensorEventListener {
 		while (loadSuccessed && MediaList.NeedUpdate()) {
 			loadSuccessed = MediaList.UpdateList();
 		}
+		MediaList.Save();
 		messageHandler.sendEmptyMessage(Constants.MSG_LOAD_LISTDATA);
 	}
 
@@ -326,6 +365,12 @@ public class Main extends Activity implements SensorEventListener {
 			case Constants.MSG_MEDIA_DOWNLOAD:
 				onMediaDownload((MediaItemData) msg.obj);
 				return;
+			case Constants.MSG_MEDIA_DELETE:
+				onMediaDelete((MediaItemData) msg.obj);
+				return;
+			case Constants.MSG_CONFIRM_YES:
+				onDialogConfirm(msg.arg1, (MediaItemData) msg.obj);
+				return;
 			case Constants.MSG_MEDIA_RECEIVED:
 				break;
 			case Constants.MSG_FILE_DOWNLOADING:
@@ -338,25 +383,19 @@ public class Main extends Activity implements SensorEventListener {
 				onFileDownloaded((MediaItemData) msg.obj);
 				break;
 			case Constants.MSG_HTTP_ERROR:
-				onFileAborted((MediaItemData) msg.obj);
-				Toast.makeText(Main.this, "文件下载失败，请检查网络", Toast.LENGTH_SHORT)
-						.show();
+				onFileAborted(msg.what, (MediaItemData) msg.obj);
 				break;
 			case Constants.MSG_DISK_ERROR:
-				onFileAborted((MediaItemData) msg.obj);
-				Toast.makeText(Main.this, "找不到SD卡，不能缓存文件", Toast.LENGTH_SHORT)
-						.show();
+				onFileAborted(msg.what, (MediaItemData) msg.obj);
 				break;
 			case Constants.MSG_SPACE_ERROR:
-				onFileAborted((MediaItemData) msg.obj);
-				Toast.makeText(Main.this, "SD卡已满，不能缓存文件", Toast.LENGTH_SHORT)
-						.show();
+				onFileAborted(msg.what, (MediaItemData) msg.obj);
 				break;
 			default:
 				super.handleMessage(msg);
 				return;
 			}
-			sendMessageToHttpd(msg);
+			// sendMessageToHttpd(msg);
 		}
 	};
 
@@ -365,15 +404,15 @@ public class Main extends Activity implements SensorEventListener {
 	}
 
 	protected void sendMessageToHttpd(Message msg) {
-		if (httpd == null || !httpd.isAlive()) {
-			return;
-		}
-
-		if (!httpd.check((MediaItemData) msg.obj)) {
-			return;
-		}
-		Message.obtain(httpd.getHandler(), msg.what, msg.arg1, msg.arg2,
-				msg.obj).sendToTarget();
+		// if (httpd == null || !httpd.isAlive()) {
+		// return;
+		// }
+		//
+		// if (!httpd.check((MediaItemData) msg.obj)) {
+		// return;
+		// }
+		// Message.obtain(httpd.getHandler(), msg.what, msg.arg1, msg.arg2,
+		// msg.obj).sendToTarget();
 	}
 
 	protected void onLoadActivity() {
@@ -413,7 +452,7 @@ public class Main extends Activity implements SensorEventListener {
 		updateMediaList(data);
 		executeDownloadQueue();
 	}
-	
+
 	protected void executeDownloadQueue() {
 		MediaItemData data = null;
 		synchronized (downloadList) {
@@ -422,7 +461,7 @@ public class Main extends Activity implements SensorEventListener {
 			}
 			isDownloadingMedia = true;
 
-			if(downloadList.size() > 0) {
+			if (downloadList.size() > 0) {
 				data = downloadList.remove(0);
 			}
 		}
@@ -434,13 +473,33 @@ public class Main extends Activity implements SensorEventListener {
 		mediaUtil.download();
 	}
 
-	protected void onFileDownloading(MediaItemData data, int size) {
-		if (playingData != null && playingData.equals(data)) {
-			if (httpd == null) {
-				httpd = new HttpdUtility();
+	protected void onMediaDelete(MediaItemData data) {
+		showConfirmDialog("确认删除", "你确定要删除这个缓存文件吗？\n缓存内容过期自动删除。",
+				Constants.MSG_MEDIA_DELETE, data);
+	}
+
+	protected void onDialogConfirm(int type, MediaItemData data) {
+		if (type == Constants.MSG_MEDIA_DELETE) {
+			if (data.path != null && !data.path.isEmpty()) {
+				File media = new File(data.path);
+				media.delete();
+
+				data.path = null;
+				data.download = -1;
+
+				MediaList.UpdateMediaItem(data);
+				updateMediaList(data);
 			}
-			httpd.startServe(data, size);
 		}
+	}
+
+	protected void onFileDownloading(MediaItemData data, int size) {
+		// if (playingData != null && playingData.equals(data)) {
+		// if (httpd == null) {
+		// httpd = new HttpdUtility();
+		// }
+		// httpd.startServe(data, size);
+		// }
 	}
 
 	protected void onFileProgressed(MediaItemData data) {
@@ -451,26 +510,41 @@ public class Main extends Activity implements SensorEventListener {
 		data.download = 200;
 		MediaList.UpdateMediaItem(data);
 		updateMediaList(data);
-		
+
 		synchronized (downloadList) {
 			isDownloadingMedia = false;
 		}
 		executeDownloadQueue();
 	}
 
-	protected void onFileAborted(final MediaItemData data) {
+	protected void onFileAborted(int type, final MediaItemData data) {
 		if (statusPlaying == Constants.STATE_PLAYING_AUDIO) {
 			closeAudioPlayer(true);
 		}
 		data.download = -1;
 		updateMediaList(data);
+
+		switch (type) {
+		case Constants.MSG_HTTP_ERROR:
+			Toast.makeText(Main.this, "文件下载失败，请检查网络", Toast.LENGTH_SHORT)
+					.show();
+			break;
+		case Constants.MSG_DISK_ERROR:
+			Toast.makeText(Main.this, "找不到SD卡，不能缓存文件", Toast.LENGTH_SHORT)
+					.show();
+			break;
+		case Constants.MSG_SPACE_ERROR:
+			Toast.makeText(Main.this, "SD卡已满，不能缓存文件", Toast.LENGTH_SHORT)
+					.show();
+			break;
+		}
 	}
-	
+
 	protected void updateMediaList(final MediaItemData data) {
 		runOnUiThread(new Runnable() {
 			@Override
 			public void run() {
-				if(data == null) {
+				if (data == null) {
 					mediaAdapter.notifyDataSetChanged();
 				} else {
 					mediaAdapter.updateMediaItem(data);
@@ -541,9 +615,9 @@ public class Main extends Activity implements SensorEventListener {
 	private void closeAudioPlayer(boolean hide) {
 		audioPlayer.stop();
 		// 保存播放位置
-//		if (playingData.progress != 0) {
-//			MediaList.UpdateMediaItem(playingData);
-//		}
+		// if (playingData.progress != 0) {
+		// MediaList.UpdateMediaItem(playingData);
+		// }
 		if (hide) {
 			LinearLayout audiolayout = (LinearLayout) findViewById(R.id.main_footer);
 			audiolayout.removeAllViewsInLayout();
@@ -611,7 +685,8 @@ public class Main extends Activity implements SensorEventListener {
 		}
 	}
 
-	private void showConfirmDialog(String title, String message) {
+	private void showConfirmDialog(String title, String message,
+			final int callback, final Object obj) {
 		if (confirm == null) {
 			View layout = getLayoutInflater().inflate(R.layout.dialog_confirm,
 					null);
@@ -632,6 +707,8 @@ public class Main extends Activity implements SensorEventListener {
 			btnConfirm.setOnClickListener(new OnClickListener() {
 				@Override
 				public void onClick(View v) {
+					Message.obtain(messageHandler, Constants.MSG_CONFIRM_YES,
+							callback, 0, obj).sendToTarget();
 					hideConfirmDialog();
 				}
 			});

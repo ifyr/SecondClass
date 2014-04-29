@@ -16,7 +16,6 @@ import com.d2js.util.MediaList;
 
 import android.content.Context;
 import android.os.Message;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -247,8 +246,6 @@ public class MediaAdapter extends BaseAdapter {
 	}
 
 	public void updateStatusView(LinearLayout layout, final MediaItemData data) {
-		Log.v("MediaAdapter", "download:" + data.download + " media:"
-				+ data.media);
 		if (data.download < 0) {
 			View status = layout.findViewById(R.layout.status_downloadable);
 			if (status == null) {
@@ -332,6 +329,11 @@ public class MediaAdapter extends BaseAdapter {
 		}
 	}
 
+	public void clear() {
+		count = 0;
+		itemlist.clear();
+	}
+
 	class ItemData {
 		public String date = null;
 		public String dateLocale = null;
@@ -342,5 +344,5 @@ public class MediaAdapter extends BaseAdapter {
 			this.dateLocale = null;
 			this.contents = new ArrayList<MediaItemData>();
 		}
-	};
+	}
 }

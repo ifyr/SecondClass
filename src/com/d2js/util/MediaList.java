@@ -69,6 +69,10 @@ public class MediaList {
 		instance.save();
 	}
 
+	public static void Clear() {
+		instance.clear();
+	}
+
 	public static void UpdateMediaItem(MediaItemData item) {
 		instance.updateMediaItem(item);
 	}
@@ -248,5 +252,10 @@ public class MediaList {
 			}
 		} catch (JSONException e) {
 		}
+	}
+
+	private void clear() {
+		readDate = Constants.DATE_FIRST_CONTENT;
+		datalist.clear();
 	}
 }

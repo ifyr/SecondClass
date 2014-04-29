@@ -1,12 +1,13 @@
 package com.d2js.secondclass;
 
 import com.d2js.util.Constants;
-import com.d2js.util.MediaUtility;
+//import com.d2js.util.MediaUtility;
 import com.d2js.util.ProgressUtility;
 
 import android.annotation.SuppressLint;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.media.MediaPlayer.OnBufferingUpdateListener;
 import android.media.MediaPlayer.OnCompletionListener;
 import android.media.MediaPlayer.OnErrorListener;
 import android.media.MediaPlayer.OnInfoListener;
@@ -23,20 +24,21 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.view.View.OnClickListener;
 
-public class AudioPlayer implements OnCompletionListener, OnInfoListener,
-		SeekBar.OnSeekBarChangeListener, OnSeekCompleteListener,
-		OnErrorListener, OnPreparedListener, OnVideoSizeChangedListener {
+public class AudioPlayer implements OnBufferingUpdateListener,
+		OnCompletionListener, OnInfoListener, SeekBar.OnSeekBarChangeListener,
+		OnSeekCompleteListener, OnErrorListener, OnPreparedListener,
+		OnVideoSizeChangedListener {
 
 	private View view = null;
 	private MediaPlayer mediaPlayer = null;
+	private String mediaPath = null;
 	private SeekBar seekBar = null;
 	private Button btnPausePlay = null;
-	private boolean isPlaying = true;
-	private boolean isSeeking = false;
-	private boolean seekComplete = true;
+	private boolean isPlaying = false; // 控制更新播放进度条
 	private boolean isPaused = false;
+	private boolean isSeeking = false; // 拖动进度条时不根据播放更新进度条
+	private boolean seekComplete = true; // 防止拖动进度条后被onComplete中止
 	private int progress = 0;
-	private String localmedia = null;
 
 	public AudioPlayer() {
 	}
@@ -58,9 +60,11 @@ public class AudioPlayer implements OnCompletionListener, OnInfoListener,
 					}
 					if (mediaPlayer.isPlaying()) {
 						mediaPlayer.pause();
+						isPaused = true;
 						toggleButton(false);
 					} else {
 						mediaPlayer.start();
+						isPaused = false;
 						toggleButton(true);
 					}
 				}
@@ -73,15 +77,24 @@ public class AudioPlayer implements OnCompletionListener, OnInfoListener,
 		layout.addView(view, match_wrap);
 	}
 
+	public boolean isPaused() {
+		return isPaused;
+	}
+
+	public boolean isPlaying() {
+		return isPlaying && !isPaused;
+	}
+
 	public void play() {
 		TextView title = (TextView) view.findViewById(R.id.audio_name);
 		title.setText(Main.instance.playingData.title);
-		
+
 		seekBar.setProgress(0);
 
 		this.isPlaying = true;
 		this.isSeeking = false;
 		this.seekComplete = true;
+		this.isPaused = false;
 
 		if (mediaPlayer == null) {
 			mediaPlayer = new MediaPlayer();
@@ -97,18 +110,24 @@ public class AudioPlayer implements OnCompletionListener, OnInfoListener,
 		mediaPlayer.setScreenOnWhilePlaying(true);
 		mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
 
-		this.progress = Main.instance.playingData.progress;
-		this.localmedia = Main.instance.playingData.path;
-		if (localmedia == null || localmedia.isEmpty() || Main.instance.playingData.download < 100) {
-			MediaUtility mediaUtil = new MediaUtility(this.messageHander,
-					Main.instance.playingData);
-			localmedia = mediaUtil.getLocalMedia();
-			mediaUtil.download();
-		} else {
-			begin();
+		this.mediaPath = Main.instance.playingData.path;
+		if (mediaPath == null || mediaPath.isEmpty()
+				|| Main.instance.playingData.download < 100) {
+			mediaPath = Main.instance.playingData.media;
 		}
 
-		toggleButton(true);
+		this.progress = Main.instance.playingData.progress;
+
+		begin();
+		// if (mediaPath == null || mediaPath.isEmpty() ||
+		// Main.instance.playingData.download < 100) {
+		// MediaUtility mediaUtil = new MediaUtility(this.messageHander,
+		// Main.instance.playingData);
+		// mediaPath = mediaUtil.getLocalMedia();
+		// mediaUtil.download();
+		// } else {
+		// begin();
+		// }
 	}
 
 	@SuppressLint("HandlerLeak")
@@ -131,15 +150,31 @@ public class AudioPlayer implements OnCompletionListener, OnInfoListener,
 				super.handleMessage(msg);
 				return;
 			}
-			Message.obtain(Main.instance.getHandler(),
-					msg.what, msg.arg1, msg.arg2, msg.obj).sendToTarget();
+			Message.obtain(Main.instance.getHandler(), msg.what, msg.arg1,
+					msg.arg2, msg.obj).sendToTarget();
 		}
 	};
 
+	public void pause() {
+		if (mediaPlayer != null && mediaPlayer.isPlaying()) {
+			mediaPlayer.pause();
+			isPaused = true;
+		}
+	}
+
+	public void resume() {
+		if (mediaPlayer != null && isPaused) {
+			mediaPlayer.start();
+			isPaused = false;
+		}
+	}
+
 	public void begin() {
 		try {
-			mediaPlayer.setDataSource(localmedia);
+			mediaPlayer.setDataSource(mediaPath);
 			mediaPlayer.prepare();
+
+			toggleButton(true);
 		} catch (Exception ex) {
 			finish();
 		}
@@ -162,12 +197,33 @@ public class AudioPlayer implements OnCompletionListener, OnInfoListener,
 		rest.setText("-"
 				+ ProgressUtility.milliSecondsToTimer(duration - progress));
 
-		this.progress = progress;
+		if (this.mediaPath.equals(Main.instance.playingData.path)) {
+			if (fromUser) {
+				this.mediaPlayer.seekTo(progress);
+			} else {
+				this.seekBar.setProgress(progress);
+			}
+			this.progress = progress;
+			Main.instance.playingData.progress = progress;
+		} else {
+			if (fromUser) {
+				int secProgress = seekBar.getSecondaryProgress();
+				if (secProgress > progress) {
+					this.progress = progress;
+					Main.instance.playingData.progress = progress;
+					this.mediaPlayer.seekTo(progress);
+				} else {
+					seekBar.setProgress(this.seekBar.getProgress());
+				}
+			} else {
+				this.progress = progress;
+				Main.instance.playingData.progress = progress;
+				this.seekBar.setProgress(progress);
+			}
+		}
 		if (progress == duration) {
 			Main.instance.playingData.progress = 0;
 			finish();
-		} else {
-			Main.instance.playingData.progress = progress;
 		}
 	}
 
@@ -178,21 +234,33 @@ public class AudioPlayer implements OnCompletionListener, OnInfoListener,
 
 	@Override
 	public void onStopTrackingTouch(SeekBar seekBar) {
-		progress = seekBar.getProgress();
+		this.progress = seekBar.getProgress();
 		if (mediaPlayer != null) {
-			// 设置当前播放的位置
-			mediaPlayer.seekTo(progress);
+			if (this.mediaPath.equals(Main.instance.playingData.path)) {
+				// 设置当前播放的位置
+				mediaPlayer.seekTo(progress);
+				this.seekComplete = false;
+			} else {
+				this.seekBar.setProgress(this.progress);
+			}
 		}
 		this.isSeeking = false;
-		this.seekComplete = false;
 	}
 
 	@Override
 	public void onCompletion(MediaPlayer mp) {
 		if (seekComplete) {
-			progress = 0;
+			this.progress = 0;
 			finish();
+		} else {
+			seekComplete = true;
+			mediaPlayer.start();
 		}
+	}
+
+	@Override
+	public void onBufferingUpdate(MediaPlayer mp, int progress) {
+		seekBar.setSecondaryProgress(progress);
 	}
 
 	@Override
@@ -204,9 +272,13 @@ public class AudioPlayer implements OnCompletionListener, OnInfoListener,
 		mp.start();
 		// 设置进度条的最大进度为视频流的最大播放时长
 		seekBar.setMax(mp.getDuration());
+		seekBar.setSecondaryProgress(0);
+		isPaused = false;
 		// 按照初始位置播放
 		if (progress != 0) {
 			mp.seekTo(progress);
+		} else {
+			mp.seekTo(0);
 		}
 		// 开始线程，更新进度条的刻度
 		new Thread() {
@@ -215,11 +287,13 @@ public class AudioPlayer implements OnCompletionListener, OnInfoListener,
 				try {
 					isPlaying = true;
 					while (isPlaying) {
-						progress = mediaPlayer.getCurrentPosition();
-						if (!isSeeking && seekComplete) {
-							seekBar.setProgress(progress);
+						if (!isPaused) {
+							if (!isSeeking && seekComplete) {
+								progress = mediaPlayer.getCurrentPosition();
+								seekBar.setProgress(progress);
+							}
 						}
-						sleep(100);
+						sleep(1000);
 					}
 				} catch (Exception e) {
 				}
@@ -248,7 +322,7 @@ public class AudioPlayer implements OnCompletionListener, OnInfoListener,
 
 	protected void toggleButton(boolean playing) {
 		btnPausePlay.setBackgroundResource(playing ? R.drawable.btn_pause
-										: R.drawable.btn_play);
+				: R.drawable.btn_play);
 	}
 
 	public void stop() {
@@ -257,20 +331,6 @@ public class AudioPlayer implements OnCompletionListener, OnInfoListener,
 				mediaPlayer.stop();
 			}
 			isPlaying = false;
-		}
-	}
-
-	public void pause() {
-		if (mediaPlayer != null && mediaPlayer.isPlaying()) {
-			mediaPlayer.pause();
-			isPaused = true;
-		}
-	}
-
-	public void resume() {
-		if (mediaPlayer != null && isPaused) {
-			mediaPlayer.start();
-			isPaused = false;
 		}
 	}
 }

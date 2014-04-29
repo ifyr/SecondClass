@@ -77,7 +77,7 @@ public class MediaUtility {
 			sendMessage(Constants.MSG_HTTP_ERROR);
 			return;
 		}
-		sendMessage(Constants.MSG_FILE_DOWNLOADING, fileSize);
+//		sendMessage(Constants.MSG_FILE_DOWNLOADING, fileSize);
 
 		// 创建写入文件内存流，通过此流向目标写文件
 		byte buf[] = new byte[8192];
@@ -96,8 +96,8 @@ public class MediaUtility {
 				downloaded += numread;
 				// 通知上层
 				int percent = downloaded * 100 / fileSize;
-				data.tempdata = buf.clone();
-				sendMessage(Constants.MSG_MEDIA_RECEIVED, downloaded, numread);
+//				data.tempdata = buf.clone();
+//				sendMessage(Constants.MSG_MEDIA_RECEIVED, downloaded, numread);
 				if (percent != data.download) {
 					data.download = percent;
 					sendMessage(Constants.MSG_FILE_PROGRESSED);

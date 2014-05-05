@@ -34,6 +34,7 @@ public class MediaAdapter extends BaseAdapter {
 	private LayoutInflater inflater = null;
 	private String readDate = null;
 	private Context context = null;
+	private int selectedItem = 0;
 
 	public MediaAdapter(Context context) {
 		this.context = context;
@@ -108,10 +109,21 @@ public class MediaAdapter extends BaseAdapter {
 
 	@Override
 	public View getView(int position, View convertView, ViewGroup parent) {
-		if (convertView == null) {
-			convertView = inflater.inflate(R.layout.panel_item, null);
+		ItemData item = itemlist.get(position);
+		if (position == selectedItem) {
+			if (convertView == null
+					|| convertView.findViewById(R.id.itemselected_layout) == null) {
+				convertView = inflater.inflate(R.layout.panel_itemselected,
+						null);
+			}
+			updateSelectedView(convertView, item);
+		} else {
+			if (convertView == null
+					|| convertView.findViewById(R.id.item_layout) == null) {
+				convertView = inflater.inflate(R.layout.panel_item, null);
+			}
+			updateItemView(convertView, item);
 		}
-		updateView(convertView, itemlist.get(position));
 		return convertView;
 	}
 
@@ -150,21 +162,18 @@ public class MediaAdapter extends BaseAdapter {
 				cal.add(Calendar.DAY_OF_MONTH, 1);
 				date = dateFormat.format(cal.getTime());
 			}
+			count = itemlist.size();
 		}
-		count = itemlist.size();
 		super.notifyDataSetChanged();
 	}
 
-	private void updateView(View view, ItemData item) {
+	private void updateItemView(View view, ItemData item) {
 		TextView item_date = (TextView) view.findViewById(R.id.item_date);
 		item_date.setText(item.dateLocale);
 
-		LinearLayout layout_audio = (LinearLayout) view
-				.findViewById(R.id.item_audio);
-		LinearLayout layout_video = (LinearLayout) view
-				.findViewById(R.id.item_video);
-
-		int audio_count = 0, video_count = 0;
+		int media_count = 0;
+		LinearLayout layout_media = (LinearLayout) view
+				.findViewById(R.id.item_media);
 
 		for (int i = 0; i < item.contents.size(); i++) {
 			MediaItemData data = item.contents.get(i);
@@ -172,47 +181,72 @@ public class MediaAdapter extends BaseAdapter {
 				continue;
 			}
 
-			View itemview = null;
-			LinearLayout layout = null;
-			if (data.media.endsWith("mp3")) {
-				layout = layout_audio;
-				itemview = layout.getChildAt(audio_count);
-				audio_count ++;
-			} else {
-				layout = layout_video;
-				itemview = layout.getChildAt(video_count);
-				video_count ++;
-			}
-			if (itemview == null) {
-				itemview = inflater.inflate(R.layout.view_media, null);
-				layout.addView(itemview,
+			TextView itemView = (TextView) layout_media.getChildAt(media_count);
+			if (itemView == null) {
+				itemView = (TextView) inflater.inflate(R.layout.view_media,
+						null);
+				layout_media.addView(itemView,
 						LinearLayout.LayoutParams.MATCH_PARENT,
 						LinearLayout.LayoutParams.WRAP_CONTENT);
 			}
-			updateItemView(itemview, data);
+
+			if (data.subject == null || data.subject.isEmpty()) {
+				itemView.setText(data.title);
+			} else {
+				itemView.setText("[" + data.subject + "]" + data.title);
+			}
+			
+			if (data.media.endsWith(".mp3")) {
+				itemView.setCompoundDrawablesWithIntrinsicBounds(R.drawable.audio_icon, 0, 0, 0);
+			} else {
+				itemView.setCompoundDrawablesWithIntrinsicBounds(R.drawable.video_icon, 0, 0, 0);
+			}
+
+			media_count++;
 		}
 
-		boolean needRequestLayout = false;
-		if (layout_audio.getChildCount() > audio_count) {
-			layout_audio.removeViewsInLayout(audio_count,
-					layout_audio.getChildCount() - audio_count);
-			layout_audio.requestLayout();
-			needRequestLayout = true;
-		}
-
-		if (layout_video.getChildCount() > video_count) {
-			layout_video.removeViewsInLayout(video_count,
-					layout_video.getChildCount() - video_count);
-			layout_video.requestLayout();
-			needRequestLayout = true;
-		}
-
-		if(needRequestLayout) {
+		if (layout_media.getChildCount() > media_count) {
+			layout_media.removeViewsInLayout(media_count,
+					layout_media.getChildCount() - media_count);
+			layout_media.requestLayout();
 			view.requestLayout();
 		}
 	}
 
-	private void updateItemView(View view, final MediaItemData data) {
+	private void updateSelectedView(View view, ItemData item) {
+		TextView item_date = (TextView) view.findViewById(R.id.item_date);
+		item_date.setText(item.dateLocale);
+
+		int media_count = 0;
+		LinearLayout layout_media = (LinearLayout) view
+				.findViewById(R.id.item_media);
+
+		for (int i = 0; i < item.contents.size(); i++) {
+			MediaItemData data = item.contents.get(i);
+			if (data.media == null || data.media.isEmpty()) {
+				continue;
+			}
+
+			View itemview = layout_media.getChildAt(media_count);
+			if (itemview == null) {
+				itemview = inflater.inflate(R.layout.view_mediaselected, null);
+				layout_media.addView(itemview,
+						LinearLayout.LayoutParams.MATCH_PARENT,
+						LinearLayout.LayoutParams.WRAP_CONTENT);
+			}
+			updateSelectedMediaView(itemview, data);
+			media_count++;
+		}
+
+		if (layout_media.getChildCount() > media_count) {
+			layout_media.removeViewsInLayout(media_count,
+					layout_media.getChildCount() - media_count);
+			layout_media.requestLayout();
+			view.requestLayout();
+		}
+	}
+
+	private void updateSelectedMediaView(View view, final MediaItemData data) {
 		TextView titleView = (TextView) view.findViewById(R.id.item_mediatitle);
 		if (data.subject == null || data.subject.isEmpty()) {
 			titleView.setText(data.title);
@@ -344,5 +378,13 @@ public class MediaAdapter extends BaseAdapter {
 			this.dateLocale = null;
 			this.contents = new ArrayList<MediaItemData>();
 		}
+	}
+
+	public boolean setSelectedItem(int position) {
+		if (this.selectedItem == position) {
+			return false;
+		}
+		this.selectedItem = position;
+		return true;
 	}
 }

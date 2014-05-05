@@ -16,7 +16,6 @@ import android.app.Activity;
 import android.content.Intent;
 
 public class Welcome extends Activity {
-	private PreferenceUtility preferUtil = null;
 	private View loadingView = null;
 	private ImageView loadingImage = null;
 	private boolean loading = false;
@@ -26,7 +25,7 @@ public class Welcome extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_welcome);
 		// PreferenceUtility需要在Welcome中初始化
-		preferUtil = PreferenceUtility.createInstance(this);
+		PreferenceUtility.createInstance(this);
 		loadingView = findViewById(R.id.welcome_loading);
 		loadingImage = (ImageView) findViewById(R.id.welcome_loadingimage);
 		loading = false;
@@ -53,24 +52,24 @@ public class Welcome extends Activity {
 	}
 
 	private void readData() {
-		MediaList.LoadSaved(preferUtil.getString(Constants.PREFKEY_LIST, ""));
-
-		if (MediaList.NeedUpdate()) {
-			if (SystemUtility.getNetworkStatus(this) == Constants.STATE_NETWORK_NONE) {
-				Toast.makeText(this, "没有网络，无法加载新内容", Toast.LENGTH_SHORT).show();
-			} else {
-				do {
-					if(!MediaList.UpdateList()) {
-						break;
-					}
-				} while(MediaList.NeedUpdate());
-
-				if (MediaList.NeedUpdate()) {
-					Toast.makeText(this, "加载内容失败，请检查网络", Toast.LENGTH_SHORT).show();
+		boolean hasNew = false; 
+		if (SystemUtility.getNetworkStatus(this) != Constants.STATE_NETWORK_NONE) {
+			if(!MediaList.UpdateList()) {
+				hasNew = true;
+			}
+		}
+		if (!hasNew) {
+			MediaList.LoadSaved();
+			if (MediaList.NeedUpdate()) {
+				if (SystemUtility.getNetworkStatus(this) == Constants.STATE_NETWORK_NONE) {
+					Toast.makeText(this, "没有网络，无法加载新内容", Toast.LENGTH_SHORT).show();
 				} else {
-					MediaList.Save();
+					Toast.makeText(this, "加载内容失败，请检查网络", Toast.LENGTH_SHORT).show();
 				}
 			}
+		} else {
+			MediaList.ClearExpire();
+			MediaList.Save();
 		}
 
 		loading = false;

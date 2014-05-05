@@ -19,7 +19,7 @@ public class ApiUtility {
         }
     }
 
-    private static boolean hasField(Class<?> klass, String fieldName) {
+    public static boolean hasField(Class<?> klass, String fieldName) {
         try {
             klass.getDeclaredField(fieldName);
             return true;
@@ -29,7 +29,7 @@ public class ApiUtility {
     }
 
 
-    private static boolean hasMethod(String className, String methodName,
+    public static boolean hasMethod(String className, String methodName,
             Class<?>... parameterTypes) {
         try {
             Class<?> klass = Class.forName(className);
@@ -40,7 +40,7 @@ public class ApiUtility {
         }
     }
 
-    private static boolean hasMethod(
+    public static boolean hasMethod(
             Class<?> klass, String methodName, Class<?> ... paramTypes) {
         try {
             klass.getDeclaredMethod(methodName, paramTypes);

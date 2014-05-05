@@ -3,7 +3,7 @@
     android:id="@+id/confirm_layout"
     android:layout_width="match_parent"
     android:layout_height="fill_parent"
-    android:background="#6fff"
+    android:background="#4000"
     android:gravity="center"
     android:padding="5dp" >
 

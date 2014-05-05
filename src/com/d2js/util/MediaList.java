@@ -1,5 +1,6 @@
 package com.d2js.util;
 
+import java.io.File;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -34,54 +35,60 @@ public class MediaList {
 	}
 
 	public static void UpdateToday() {
-		instance.updateToday();
+		SharedInstance().updateToday();
 	}
 
 	public static String ReadDate() {
-		return instance.readDate;
+		return SharedInstance().readDate;
 	}
 
 	public static String Today() {
-		return instance.today;
+		return SharedInstance().today;
 	}
 
 	public static int Count() {
-		return instance.datalist.size();
+		return SharedInstance().datalist.size();
 	}
 
 	public static boolean NeedUpdate() {
-		return instance.needUpdate();
+		return SharedInstance().needUpdate();
 	}
 
-	public static void LoadSaved(String strSaved) {
-		SharedInstance().loadSaved(strSaved);
+	public static void LoadSaved() {
+		SharedInstance().loadSaved();
 	}
-	
+
 	public static boolean UpdateList() {
-		return instance.updateList();
+		return SharedInstance().updateList();
 	}
 
 	public static String ItemData(String date) {
-		return instance.getItemData(date);
+		return SharedInstance().getItemData(date);
 	}
 
 	public static void Save() {
-		instance.save();
+		SharedInstance().save();
 	}
 
 	public static void Clear() {
-		instance.clear();
+		SharedInstance().clear();
+	}
+
+	public static void ClearExpire() {
+		SharedInstance().clearExpire();
 	}
 
 	public static void UpdateMediaItem(MediaItemData item) {
-		instance.updateMediaItem(item);
+		SharedInstance().updateMediaItem(item);
 	}
 
 	private void updateToday() {
 		today = dateFormat.format(new Date());
 	}
 
-	private void loadSaved(String strSaved) {
+	private void loadSaved() {
+		String strSaved = PreferenceUtility.SharedInstance().getString(
+				Constants.PREFKEY_LIST, null);
 		if (strSaved == null || strSaved.isEmpty()) {
 			return;
 		}
@@ -108,14 +115,12 @@ public class MediaList {
 		} catch (ParseException ex) {
 			return;
 		}
-		
-		// 假设系统时间准确
-		Calendar cal_since = dateFormat.getCalendar();
-		cal_since.setTime(new Date());
-		cal_since.add(Calendar.DAY_OF_MONTH, -15);
-		String date_since = dateFormat.format(cal_since.getTime());
 
 		Calendar cal = dateFormat.getCalendar();
+		cal.setTime(date_until);
+		cal.add(Calendar.DAY_OF_MONTH, -15);
+		String date_since = dateFormat.format(cal.getTime());
+
 		cal.setTime(date_until);
 		String date = dateFormat.format(cal.getTime());
 		while (date.compareTo(date_since) >= 0) {
@@ -138,16 +143,12 @@ public class MediaList {
 					Constants.PREFKEY_COOKIE, "");
 			httpUtil = new HttpUtility(cookies);
 		}
-		// 假设系统时间准确
+
 		Calendar cal_read = dateFormat.getCalendar();
 		cal_read.setTime(new Date());
-		cal_read.add(Calendar.DAY_OF_MONTH, -15);
 		String date_read = dateFormat.format(cal_read.getTime());
-		if (readDate.compareTo(date_read) < 0) {
-			readDate = date_read;
-		}
 
-		String strList = httpUtil.getList(readDate);
+		String strList = httpUtil.getList(date_read);
 		if (strList == null || strList.isEmpty()) {
 			return false;
 		}
@@ -183,13 +184,11 @@ public class MediaList {
 		cal.setTime(date_since);
 		String date = dateFormat.format(cal.getTime());
 		while (date.compareTo(until_date) <= 0) {
-			if (!datalist.containsKey(date)) {
-				JSONObject item = json.optJSONObject(date);
-				if (item != null && item.length() != 0) {
-					datalist.put(date, item.toString());
-					if (date.compareTo(readDate) > 0) {
-						readDate = date;
-					}
+			JSONObject item = json.optJSONObject(date);
+			if (item != null && item.length() != 0) {
+				datalist.put(date, item.toString());
+				if (date.compareTo(readDate) > 0) {
+					readDate = date;
 				}
 			}
 
@@ -229,8 +228,8 @@ public class MediaList {
 			}
 		}
 
-		PreferenceUtility.SharedInstance().putString(
-				Constants.PREFKEY_LIST, json.toString());
+		PreferenceUtility.SharedInstance().putString(Constants.PREFKEY_LIST,
+				json.toString());
 	}
 
 	private void updateMediaItem(MediaItemData data) {
@@ -245,9 +244,9 @@ public class MediaList {
 				item.put("progress", data.progress);
 				item.put("path", data.path);
 				item.put("download", data.download);
-				
+
 				json.put("content" + data.content, item);
-				datalist.put(data.date, json.toString());				
+				datalist.put(data.date, json.toString());
 				save();
 			}
 		} catch (JSONException e) {
@@ -257,5 +256,87 @@ public class MediaList {
 	private void clear() {
 		readDate = Constants.DATE_FIRST_CONTENT;
 		datalist.clear();
+	}
+
+	private void clearExpire() {
+		String strSaved = PreferenceUtility.SharedInstance().getString(
+				Constants.PREFKEY_LIST, null);
+		if (strSaved == null || strSaved.isEmpty()) {
+			return;
+		}
+
+		JSONObject json = null;
+		try {
+			json = new JSONObject(strSaved);
+		} catch (JSONException ex) {
+			return;
+		}
+		if (json == null || json.length() == 0) {
+			return;
+		}
+
+		String until_date = json.optString(Constants.JSONKEY_UNTILDATE);
+		if (until_date == null || until_date.isEmpty()) {
+			return;
+		}
+
+		Date date_until = null;
+		try {
+			date_until = dateFormat.parse(until_date);
+		} catch (ParseException ex) {
+			return;
+		}
+
+		Calendar cal = dateFormat.getCalendar();
+		cal.setTime(date_until);
+		cal.add(Calendar.DAY_OF_MONTH, -15);
+		String date_since = dateFormat.format(cal.getTime());
+
+		cal.setTime(date_until);
+		String date = dateFormat.format(cal.getTime());
+		while (date.compareTo(date_since) >= 0) {
+			JSONObject item = json.optJSONObject(date);
+			if (item == null || item.length() == 0) {
+				continue;
+			}
+			for (int i = 0; i < 5; i++) {
+				String key = "content" + i;
+				if (!item.has(key)) {
+					continue;
+				}
+				JSONObject content = item.optJSONObject(key);
+				if (content == null || !content.has("path")) {
+					continue;
+				}
+				String path = content.optString("path", null);
+				if (path == null || path.isEmpty()) {
+					continue;
+				}
+
+				String newpath = null;
+				if (datalist.containsKey(date)) {
+					String newItemStr = datalist.get(date);
+					try {
+						JSONObject newItem = new JSONObject(newItemStr);
+						if (newItem.has(key)) {
+							JSONObject newcontent = newItem.optJSONObject(key);
+							if (newcontent != null && newcontent.has("path")) {
+								newpath = newcontent.optString("path", null);
+							}
+						}
+					} catch (JSONException e) {
+					}
+				}
+				if (!path.equals(newpath)) {
+					File file = new File(path);
+					if (file.exists()) {
+						file.delete();
+					}
+				}
+			}
+
+			cal.add(Calendar.DAY_OF_MONTH, -1);
+			date = dateFormat.format(cal.getTime());
+		}
 	}
 }

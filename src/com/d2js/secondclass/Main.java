@@ -26,6 +26,7 @@ import android.view.ViewGroup.LayoutParams;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.view.WindowManager;
+import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
@@ -90,7 +91,7 @@ public class Main extends Activity implements SensorEventListener {
 		instance = this;
 
 		ueHandler = new UncaughtExceptionHandler(this);
-		// Thread.setDefaultUncaughtExceptionHandler(ueHandler);
+		Thread.setDefaultUncaughtExceptionHandler(ueHandler);
 
 		downloadList = new ArrayList<MediaItemData>();
 
@@ -190,8 +191,8 @@ public class Main extends Activity implements SensorEventListener {
 				SensorManager.SENSOR_DELAY_NORMAL);
 
 		super.onResume();
-		messageHandler.sendEmptyMessageDelayed(Constants.MSG_LOAD_ACTIVITY,
-				1000);
+		messageHandler
+				.sendEmptyMessageDelayed(Constants.MSG_LOAD_ACTIVITY, 100);
 	}
 
 	@Override
@@ -299,7 +300,7 @@ public class Main extends Activity implements SensorEventListener {
 			statusPlaying = Constants.STATE_PLAYING_NONE;
 		}
 	}
-	
+
 	public void reloadMediaList() {
 		MediaList.Clear();
 		mediaAdapter.clear();
@@ -416,10 +417,24 @@ public class Main extends Activity implements SensorEventListener {
 	}
 
 	protected void onLoadActivity() {
-		if (mediaAdapter == null) {
-			mediaAdapter = new MediaAdapter(Main.this);
-			medialist.setAdapter(mediaAdapter);
+		if (mediaAdapter != null) {
+			return;
 		}
+
+		mediaAdapter = new MediaAdapter(Main.this);
+		medialist.setAdapter(mediaAdapter);
+
+		medialist.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+			@Override
+			public void onItemClick(AdapterView<?> parent, View view,
+					int position, long id) {
+				if (mediaAdapter.setSelectedItem(position)) {
+					mediaAdapter.notifyDataSetChanged();
+					medialist.setSelectionFromTop(position, 0);
+				}
+			}
+		});
+
 	}
 
 	protected void onLoadListData() {

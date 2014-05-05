@@ -13,6 +13,7 @@
     <string name="audio">音频</string>
     <string name="video">视频</string>
     <string name="action">播放</string>
+	<string name="media_date">00月00日</string>
     <string name="media_title">音频或者视频内容的标题不限长度</string>
     <string name="media_length">1.00MB 4分60秒</string>
     <string name="downloadable">可下载</string>
@@ -31,4 +32,4 @@
     <string name="hint_name">上次播放的内容的相应标题</string>
     <string name="hint_info">已播放：00分00秒</string>
     <string name="hint_resume">继续播放</string>
-</resources>
+</resources>

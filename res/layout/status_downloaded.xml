@@ -5,23 +5,14 @@
     android:orientation="horizontal"
     android:paddingTop="6dp" >
 
-    <TextView
-        android:id="@+id/status_text_downloaded"
-        android:layout_width="wrap_content"
-        android:layout_height="40dp"
-        android:paddingTop="8dp"
-        android:text="@string/downloaded"
-        android:textColor="#3c6"
-        android:textSize="18sp" />
-
     <ImageView
         android:id="@+id/status_image_downloaded"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
+        android:layout_width="116dp"
+        android:layout_height="36dp"
         android:background="@drawable/btn_delete"
         android:clickable="true"
         android:contentDescription="@string/downloaded"
-        android:paddingRight="8dp"
-        android:paddingTop="8dp" />
+        android:paddingRight="10dp"
+        android:paddingTop="10dp" />
 
 </LinearLayout>
